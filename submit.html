@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Submit Listing</title>
+</head>
+<body>
+  <h1>Submit Listing</h1>
+
+  <form id="form">
+    <input placeholder="Title" name="title" required /><br />
+    <input placeholder="Price" name="price" type="number" required /><br />
+    <input placeholder="Location" name="location" required /><br />
+    <input placeholder="Contact" name="contact" required /><br />
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="message"></p >
+
+  <script>
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const formData = new FormData(e.target)
+
+      const response = await fetch('/.netlify/functions/submit', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: formData.get('title'),
+          price: formData.get('price'),
+          location: formData.get('location'),
+          contact: formData.get('contact')
+        }),
+      })
+
+      const result = await response.json()
+      document.getElementById('message').innerText = result.message || result.error
+    })
+  </script>
+</body>
+</html>

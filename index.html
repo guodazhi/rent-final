@@ -1,193 +1,82 @@
 <!doctype html>
 <html lang="zh">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>翱翔安居 · XATU</title>
-
-<style>
-:root{
-  --main:#2563eb;
-  --bg:#f5f7fb;
-  --card:#ffffff;
-  --text:#111827;
-  --muted:#6b7280;
-}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:var(--bg);
-  color:var(--text);
-}
-.container{
-  max-width:800px;
-  margin:auto;
-  padding:16px;
-}
-.header{
-  background:linear-gradient(90deg,#e0f2fe,#dbeafe);
-  padding:16px;
-  border-radius:18px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.logo{
-  font-size:20px;
-  font-weight:700;
-}
-.lang-btn{
-  background:white;
-  border:none;
-  padding:6px 12px;
-  border-radius:12px;
-  cursor:pointer;
-}
-.title{
-  margin-top:20px;
-  font-size:32px;
-  font-weight:800;
-}
-.tag{
-  margin-top:12px;
-  background:#e5e7eb;
-  padding:8px 14px;
-  border-radius:20px;
-  display:inline-block;
-}
-.search{
-  margin-top:14px;
-}
-.search input{
-  width:100%;
-  padding:10px;
-  border-radius:12px;
-  border:1px solid #ddd;
-}
-.cards{
-  margin-top:20px;
-  display:grid;
-  gap:14px;
-}
-.card{
-  background:var(--card);
-  padding:14px;
-  border-radius:16px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:white;
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-  border-top:1px solid #ddd;
-}
-.bottom-nav a{
-  text-decoration:none;
-  color:var(--text);
-  font-size:14px;
-}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>翱翔安居 · XATU</title>
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="assets/styles.css"/>
 </head>
-
 <body>
-
-<div class="container">
-
-  <div class="header">
-    <div class="logo">🐨 翱翔安居 · XATU</div>
-    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  <div class="topbar">
+    <div class="brand">
+      <!-- ✅头像/Logo：用你仓库原来的文件，不替换 -->
+      < img src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
+      <span data-i18n="brand"></span>
+    </div>
+    <button class="lang" id="langBtn"></button>
   </div>
 
-  <div class="title" id="mainTitle">
-    西安工业大学学生租房平台
+  <div class="wrap">
+    <div class="small" data-i18n="suggestWeChat"></div>
+    <div class="h1" data-i18n="homeTitle"></div>
+
+    <div class="row">
+      <select class="input" id="campus">
+        <option value="" data-i18n="filterAll"></option>
+        <option value="友谊校区">友谊校区</option>
+        <option value="长安校区">长安校区</option>
+        <option value="未央校区">未央校区</option>
+      </select>
+
+      <select class="input" id="rentType">
+        <option value="" data-i18n="filterAll"></option>
+        <option value="整租">整租</option>
+        <option value="合租">合租</option>
+      </select>
+
+      <select class="input" id="bathroom">
+        <option value="" data-i18n="filterAll"></option>
+        <option value="独卫">独卫</option>
+        <option value="公卫">公卫</option>
+      </select>
+
+      <select class="input" id="subway">
+        <option value="" data-i18n="filterAll"></option>
+        <option value="近地铁">近地铁</option>
+        <option value="不限">不限</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <input class="input" id="q" data-i18n-placeholder="searchPlaceholder" placeholder=""/>
+      <button class="btn btnPrimary" id="btnSearch" data-i18n="btnSearch"></button>
+      <button class="btn" id="btnClear" data-i18n="btnClear"></button>
+    </div>
+
+    <div id="listingGrid" class="grid"></div>
   </div>
 
-  <div class="tag" id="campusTag">
-    西安工业大学（友谊校区）
+  <div class="nav">
+    <a class="active" href=" "><div>🏠</div><div data-i18n="navRent"></div></a >
+    <a href="submit.html"><div>➕</div><div data-i18n="navSubmit"></div></a >
+    <a href="favorites.html"><div>⭐</div><div data-i18n="navFav"></div></a >
+    <a href="support.html"><div>💬</div><div data-i18n="navSupport"></div></a >
   </div>
 
-  <div class="search">
-    <input id="searchBox" placeholder="搜索：校区 / 整租 / 独卫 / 地铁..." />
-  </div>
-
-  <div class="cards" id="listingContainer">
-    <!-- 房源会加载到这里 -->
-  </div>
-
-</div>
-
-<div class="bottom-nav">
-  <a href=" " id="navHome">租房</a >
-  <a href="submit.html" id="navPost">发布</a >
-  <a href="approved.html" id="navFav">收藏</a >
-  <a href="admin.html" id="navService">客服</a >
-</div>
-
-<script>
-
-let currentLang = "zh";
-
-function toggleLang(){
-  if(currentLang === "zh"){
-    currentLang = "en";
-    document.documentElement.lang="en";
-    document.getElementById("mainTitle").innerText =
-      "Xi'an Technological University Student Housing Platform";
-    document.getElementById("campusTag").innerText =
-      "XATU (Youyi Campus)";
-    document.getElementById("searchBox").placeholder =
-      "Search: campus / whole rent / metro / private bath...";
-    document.getElementById("navHome").innerText="Home";
-    document.getElementById("navPost").innerText="Post";
-    document.getElementById("navFav").innerText="Approved";
-    document.getElementById("navService").innerText="Admin";
-  }else{
-    currentLang = "zh";
-    document.documentElement.lang="zh";
-    document.getElementById("mainTitle").innerText =
-      "西安工业大学学生租房平台";
-    document.getElementById("campusTag").innerText =
-      "西安工业大学（友谊校区）";
-    document.getElementById("searchBox").placeholder =
-      "搜索：校区 / 整租 / 独卫 / 地铁...";
-    document.getElementById("navHome").innerText="租房";
-    document.getElementById("navPost").innerText="发布";
-    document.getElementById("navFav").innerText="收藏";
-    document.getElementById("navService").innerText="客服";
-  }
-}
-
-async function loadListings(){
-  try{
-    const res = await fetch("/.netlify/functions/getApproved");
-    const data = await res.json();
-    const container = document.getElementById("listingContainer");
-    container.innerHTML="";
-
-    data.forEach(item=>{
-      const div=document.createElement("div");
-      div.className="card";
-      div.innerHTML=`
-        <h3>${item.title}</h3>
-        <p>¥${item.price}</p >
-        <p>${item.location || ""}</p >
-        <p>${item.contact || ""}</p >
-      `;
-      container.appendChild(div);
-    });
-  }catch(err){
-    console.error(err);
-  }
-}
-
-loadListings();
-
-</script>
-
+  <script src="assets/i18n.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    I18N_HELPER.applyI18n();
+    document.getElementById("langBtn").onclick = ()=>{
+      I18N_HELPER.setLang(I18N_HELPER.getLang()==="zh"?"en":"zh");
+    };
+    document.getElementById("btnSearch").onclick = ()=>APP.loadListings();
+    document.getElementById("btnClear").onclick = ()=>{
+      ["campus","rentType","bathroom","subway","q"].forEach(id=>document.getElementById(id).value="");
+      APP.loadListings();
+    };
+    APP.loadListings();
+  </script>
 </body>
 </html>

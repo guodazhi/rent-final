@@ -1,92 +1,107 @@
-// netlify/functions/submit.js
-const { createClient } = require("@supabase/supabase-js");
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>Submit Listing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Content-Type": "application/json",
-};
-
-exports.handler = async (event) => {
-  try {
-    // CORS preflight
-    if (event.httpMethod === "OPTIONS") {
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 60px auto;
     }
 
-    if (event.httpMethod !== "POST") {
-      return {
-        statusCode: 405,
-        headers,
-        body: JSON.stringify({ error: "Method Not Allowed" }),
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Submit Listing</h1>
+
+  <form id="listingForm">
+    <input type="text" id="title" placeholder="Title" required />
+    <input type="number" id="price" placeholder="Price" required />
+    <input type="text" id="location" placeholder="Location" />
+    <input type="text" id="contact" placeholder="Contact" />
+    <textarea id="description" placeholder="Description (optional)"></textarea>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="message"></div>
+
+  <script>
+    const form = document.getElementById("listingForm");
+    const messageDiv = document.getElementById("message");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      messageDiv.textContent = "Submitting...";
+      messageDiv.className = "";
+
+      const data = {
+        title: document.getElementById("title").value,
+        price: document.getElementById("price").value,
+        location: document.getElementById("location").value,
+        contact: document.getElementById("contact").value,
+        description: document.getElementById("description").value
       };
-    }
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      try {
+        const res = await fetch("/.netlify/functions/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: "Missing env vars: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY",
-        }),
-      };
-    }
+        const result = await res.json();
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        if (!res.ok) {
+          throw new Error(result.error || "Submission failed");
+        }
 
-    const body = event.body ? JSON.parse(event.body) : {};
-    const title = (body.title || "").trim();
-    const price = Number(body.price);
-    const location = (body.location || "").trim();
-    const contact = (body.contact || "").trim();
-    const description = (body.description || "").trim();
+        messageDiv.textContent = "提交成功！等待审核。";
+        messageDiv.className = "success";
+        form.reset();
 
-    if (!title || Number.isNaN(price)) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "title and price are required" }),
-      };
-    }
+      } catch (err) {
+        messageDiv.textContent = "错误：" + err.message;
+        messageDiv.className = "error";
+      }
+    });
+  </script>
 
-    const insertData = {
-      title,
-      price,
-      location: location || null,
-      contact: contact || null,
-      description: description || null,
-      approved: false,
-      // landlord_id 现在你已经允许 null 了，所以不传也可以
-    };
-
-    const { data, error } = await supabase
-      .from("listings")
-      .insert([insertData])
-      .select()
-      .single();
-
-    if (error) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: error.message, detail: error.details || null }),
-      };
-    }
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ ok: true, listing: data }),
-    };
-  } catch (e) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: String(e && e.message ? e.message : e) }),
-    };
-  }
-};
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>管理员工单 / Admin Tickets</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: system-ui; max-width: 980px; margin: 24px auto; padding: 0 14px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .card { border:1px solid #e5e5e5; border-radius:10px; padding:12px; margin:10px 0; }
+    .muted { color:#666; font-size:13px; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #ddd; margin-left:6px; font-size:12px; }
+    button, select, input { padding:10px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h2 id="t">管理员工单中心</h2>
+    <div class="muted" id="sub">输入 PIN 后可修改状态</div>
+  </div>
+  <div>
+    <button id="lang">EN</button>
+    <button id="login">Login</button>
+    <button id="logout" style="display:none;">Logout</button>
+  </div>
+</header>
+
+<div class="row" style="margin:12px 0;">
+  <input id="pin" placeholder="ADMIN PIN" style="width:180px;" />
+  <button id="reload">Reload</button>
+  <span class="muted" id="msg"></span>
+</div>
+
+<hr/>
+<div id="list"></div>
+
+<script>
+  const i18n = {
+    zh: { t:"管理员工单中心", sub:"输入 PIN 后可修改状态" },
+    en: { t:"Admin Ticket Center", sub:"Enter PIN to update status" },
+  };
+  let lang = localStorage.getItem('lang') || 'zh';
+  function applyLang(){
+    document.getElementById('t').textContent = i18n[lang].t;
+    document.getElementById('sub').textContent = i18n[lang].sub;
+    document.getElementById('lang').textContent = (lang==='zh')?'EN':'中文';
+  }
+
+  const supabaseUrl = "YOUR_SUPABASE_URL";
+  const supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY";
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+  async function getToken() {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token || null;
+  }
+  function esc(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
+
+  function render(r){
+    return `
+      <div class="card">
+        <div><b>${esc(r.title || '(no title)')}</b>
+          <span class="pill">${esc(r.type)}</span>
+          <span class="pill">${esc(r.priority)}</span>
+          <span class="pill">${esc(r.status)}</span>
+        </div>
+        <div class="muted">id: ${r.id}</div>
+        <div class="muted">student: ${r.student_id}</div>
+        <div class="muted">listing: ${r.listing_id || '-'}</div>
+        <div style="margin-top:8px;">${esc(r.content || '')}</div>
+
+        <div class="row" style="margin-top:10px;">
+          <select data-id="${r.id}" class="status">
+            <option value="open" ${r.status==='open'?'selected':''}>open</option>
+            <option value="in_progress" ${r.status==='in_progress'?'selected':''}>in_progress</option>
+            <option value="resolved" ${r.status==='resolved'?'selected':''}>resolved</option>
+            <option value="rejected" ${r.status==='rejected'?'selected':''}>rejected</option>
+          </select>
+          <select data-id="${r.id}" class="priority">
+            <option value="low" ${r.priority==='low'?'selected':''}>low</option>
+            <option value="normal" ${r.priority==='normal'?'selected':''}>normal</option>
+            <option value="high" ${r.priority==='high'?'selected':''}>high</option>
+          </select>
+          <button data-id="${r.id}" class="save">Save</button>
+        </div>
+
+        <div class="muted" style="margin-top:8px;">${new Date(r.created_at).toLocaleString()}</div>
+      </div>
+    `;
+  }
+
+  async function load(){
+    const token = await getToken();
+    document.getElementById('login').style.display = token ? 'none' : '';
+    document.getElementById('logout').style.display = token ? '' : 'none';
+    if (!token) { document.getElementById('list').innerHTML = '<div class="muted">Login required.</div>'; return; }
+
+    // 这里管理员列表为了简单：直接用 supabase client 查 reports（需要你给管理员账号配置能 select reports 或临时用 service-role）
+    // 最稳：你如果不想动 policy，就改为做一个 admin_list function 用 SERVICE ROLE 拉全量。
+    const { data, error } = await supabase.from('reports').select('*').order('created_at', { ascending:false }).limit(300);
+    if (error) { document.getElementById('list').innerHTML = `<div class="muted">${esc(error.message)}</div>`; return; }
+    document.getElementById('list').innerHTML = (data||[]).map(render).join('') || '<div class="muted">No tickets.</div>';
+
+    document.querySelectorAll('.save').forEach(btn=>{
+      btn.onclick = async ()=>{
+        const id = btn.dataset.id;
+        const status = document.querySelector(`.status[data-id="${id}"]`).value;
+        const priority = document.querySelector(`.priority[data-id="${id}"]`).value;
+        const pin = document.getElementById('pin').value.trim();
+        document.getElementById('msg').textContent = '...';
+
+        const res = await fetch('/.netlify/functions/report_admin_update', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ pin, report_id:id, status, priority })
+        });
+        const out = await res.json();
+        document.getElementById('msg').textContent = out.ok ? 'Saved' : (out.error || 'error');
+        if (out.ok) await load();
+      };
+    });
+  }
+
+  async function quickLogin(){
+    const email = prompt('Email:'); if(!email) return;
+    const password = prompt('Password:'); if(!password) return;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    await load();
+  }
+  async function logout(){ await supabase.auth.signOut(); await load(); }
+
+  document.getElementById('lang').onclick = ()=>{ lang=(lang==='zh')?'en':'zh'; localStorage.setItem('lang',lang); applyLang(); };
+  document.getElementById('login').onclick = quickLogin;
+  document.getElementById('logout').onclick = logout;
+  document.getElementById('reload').onclick = load;
+
+  applyLang();
+  load();
+</script>
+</body>
+</html>

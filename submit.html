@@ -1,198 +1,87 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Submit Listing</title>
-  <style>
-    :root { color-scheme: light; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-      margin: 0;
-      padding: 24px;
-      background: #fff;
-      color: #111;
-    }
-    .wrap { max-width: 720px; margin: 0 auto; }
-    h1 { font-size: 44px; margin: 8px 0 18px; font-weight: 800; letter-spacing: -0.5px; }
-    label { display: block; margin: 14px 0 6px; font-weight: 600; color: #222; }
-    input, textarea {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #cfcfcf;
-      border-radius: 8px;
-      padding: 12px 12px;
-      font-size: 16px;
-      outline: none;
-      background: #fff;
-    }
-    input:focus, textarea:focus { border-color: #7aa7ff; box-shadow: 0 0 0 3px rgba(122,167,255,0.2); }
-    textarea { min-height: 120px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-    @media (max-width: 720px) {
-      h1 { font-size: 34px; }
-      .row, .row3 { grid-template-columns: 1fr; }
-    }
-    button {
-      margin-top: 16px;
-      border: 1px solid #bdbdbd;
-      background: #f2f2f2;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .hint { margin-top: 8px; color: #666; font-size: 14px; }
-    .msg {
-      margin-top: 14px;
-      padding: 12px 12px;
-      border-radius: 10px;
-      font-size: 15px;
-      display: none;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .ok { display: block; background: #eaf7ee; border: 1px solid #b7e1c2; color: #0d6b2b; }
-    .err { display: block; background: #fdecec; border: 1px solid #f3b1b1; color: #9b1c1c; }
-    .nav { margin-top: 18px; display:flex; gap:12px; flex-wrap:wrap; }
-    .nav a { color:#1a73e8; text-decoration:none; font-weight:600; }
-    .nav a:hover { text-decoration:underline; }
-    .tiny { margin-top: 10px; font-size: 12px; color: #888; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-  </style>
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="assets/styles.css"/>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Submit Listing</h1>
+  <div class="topbar">
+    <div class="brand">
+      < img src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
+      <span data-i18n="brand"></span>
+    </div>
+    <button class="lang" id="langBtn"></button>
+  </div>
 
-    <form id="form">
-      <label for="title">Title</label>
-      <input id="title" name="title" placeholder="e.g. Master Room" required />
+  <div class="wrap">
+    <div class="h1" data-i18n="submitTitle"></div>
+
+    <form id="f">
+      <div class="row">
+        <input class="input" id="title" data-i18n-placeholder="formTitle" placeholder="">
+        <input class="input" id="price" type="number" data-i18n-placeholder="formPrice" placeholder="">
+      </div>
+      <div class="row">
+        <input class="input" id="location" data-i18n-placeholder="formLocation" placeholder="">
+        <input class="input" id="contact" data-i18n-placeholder="formContact" placeholder="">
+      </div>
 
       <div class="row">
-        <div>
-          <label for="price">Price</label>
-          <input id="price" name="price" placeholder="e.g. 800" inputmode="numeric" required />
-        </div>
-        <div>
-          <label for="location">Location</label>
-          <input id="location" name="location" placeholder="e.g. Brisbane / 西安" required />
-        </div>
+        <select class="input" id="campus">
+          <option value="">校区 / Campus</option>
+          <option value="友谊校区">友谊校区</option>
+          <option value="长安校区">长安校区</option>
+          <option value="未央校区">未央校区</option>
+        </select>
+        <select class="input" id="rentType">
+          <option value="">整租/合租</option>
+          <option value="整租">整租</option>
+          <option value="合租">合租</option>
+        </select>
       </div>
 
-      <label for="contact">Contact</label>
-      <input id="contact" name="contact" placeholder="e.g. WeChat / Phone" required />
-
-      <label for="description">Description (optional)</label>
-      <textarea id="description" name="description" placeholder="简单描述一下房源/要求…"></textarea>
-
-      <button id="btn" type="submit">Submit</button>
-      <div class="hint">提交后将进入待审核状态，审核通过后会在 Approved Listings 页面显示。</div>
-
-      <div id="msgOk" class="msg ok">✅ Submitted! Waiting for approval…</div>
-      <div id="msgErr" class="msg err"></div>
-
-      <div class="nav">
-        <a href=" ">Approved Listings</a >
-        <a href="./admin.html">Admin Panel</a >
-        <a href="./index.html">Home</a >
+      <div class="row">
+        <select class="input" id="bathroom">
+          <option value="">独卫/公卫</option>
+          <option value="独卫">独卫</option>
+          <option value="公卫">公卫</option>
+        </select>
+        <select class="input" id="subway">
+          <option value="">地铁</option>
+          <option value="近地铁">近地铁</option>
+          <option value="不限">不限</option>
+        </select>
       </div>
 
-      <div class="tiny mono">
-        API: <span id="apiUrl"></span>
+      <textarea class="input" id="description" rows="4" data-i18n-placeholder="formDesc" placeholder=""></textarea>
+
+      <div class="row">
+        <button class="btn btnPrimary" type="submit" data-i18n="btnSubmit"></button>
       </div>
+
+      <div id="status" class="hint"></div>
+      <div class="small">* 提交后进入待审核，审核通过后会出现在首页。</div>
     </form>
   </div>
 
+  <div class="nav">
+    <a href=" "><div>🏠</div><div data-i18n="navRent"></div></a >
+    <a class="active" href="submit.html"><div>➕</div><div data-i18n="navSubmit"></div></a >
+    <a href="favorites.html"><div>⭐</div><div data-i18n="navFav"></div></a >
+    <a href="support.html"><div>💬</div><div data-i18n="navSupport"></div></a >
+  </div>
+
+  <script src="assets/i18n.js"></script>
+  <script src="assets/app.js"></script>
   <script>
-    (function () {
-      const form = document.getElementById('form');
-      const btn = document.getElementById('btn');
-      const msgOk = document.getElementById('msgOk');
-      const msgErr = document.getElementById('msgErr');
-      const apiUrlEl = document.getElementById('apiUrl');
-
-      // Netlify Functions endpoint（同域）
-      const API = '/.netlify/functions/submit';
-      apiUrlEl.textContent = API;
-
-      function showOk(text) {
-        msgErr.style.display = 'none';
-        msgOk.style.display = 'block';
-        msgOk.textContent = text || '✅ Submitted! Waiting for approval…';
-      }
-
-      function showErr(text) {
-        msgOk.style.display = 'none';
-        msgErr.style.display = 'block';
-        msgErr.textContent = text || '❌ Submission failed';
-      }
-
-      function normalizePrice(v) {
-        // 允许 "1,280" / "1280" / "1280.50"
-        const s = String(v || '').trim().replace(/,/g, '');
-        if (!s) return null;
-        const n = Number(s);
-        if (!Number.isFinite(n) || n <= 0) return null;
-        return n;
-      }
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        msgOk.style.display = 'none';
-        msgErr.style.display = 'none';
-
-        const title = document.getElementById('title').value.trim();
-        const location = document.getElementById('location').value.trim();
-        const contact = document.getElementById('contact').value.trim();
-        const description = document.getElementById('description').value.trim();
-        const priceNum = normalizePrice(document.getElementById('price').value);
-
-        // 前端必填校验（避免你看到“undefined”）
-        if (!title) return showErr('请填写 Title。');
-        if (!priceNum) return showErr('请填写正确的 Price（必须是正数）。');
-        if (!location) return showErr('请填写 Location。');
-        if (!contact) return showErr('请填写 Contact。');
-
-        btn.disabled = true;
-        btn.textContent = 'Submitting...';
-
-        const payload = { title, price: priceNum, location, contact, description };
-
-        try {
-          const res = await fetch(API, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-
-          // 先拿到原始文本，避免后端返回 HTML / 502 时 JSON.parse 直接炸
-          const raw = await res.text();
-
-          // 尝试解析 JSON（解析失败就把 raw 当错误信息展示）
-          let data = null;
-          try { data = raw ? JSON.parse(raw) : null; } catch (_) {}
-
-          if (!res.ok) {
-            const detail = (data && (data.error || data.message)) ? (data.error || data.message) : raw;
-            return showErr(`❌ 提交失败（HTTP ${res.status}）\n${detail || 'No details'}`);
-          }
-
-          // 成功
-          showOk('✅ Submitted! Waiting for approval…');
-          form.reset();
-        } catch (err) {
-          showErr('❌ 网络或函数错误：\n' + (err && err.message ? err.message : String(err)));
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Submit';
-        }
-      });
-    })();
+    I18N_HELPER.applyI18n();
+    document.getElementById("langBtn").onclick = ()=>{
+      I18N_HELPER.setLang(I18N_HELPER.getLang()==="zh"?"en":"zh");
+    };
+    document.getElementById("f").addEventListener("submit", APP.submitListing);
   </script>
 </body>
 </html>

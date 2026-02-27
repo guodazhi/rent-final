@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>房东工单 / Landlord Tickets</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: system-ui; max-width: 920px; margin: 24px auto; padding: 0 14px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .card { border:1px solid #e5e5e5; border-radius:10px; padding:12px; margin:10px 0; }
+    .muted { color:#666; font-size:13px; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #ddd; margin-left:6px; font-size:12px; }
+    button { padding:10px; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h2 id="t">房东工单中心</h2>
+    <div class="muted" id="sub">仅显示与你房源相关的工单</div>
+  </div>
+  <div>
+    <button id="lang">EN</button>
+    <button id="login">Login</button>
+    <button id="logout" style="display:none;">Logout</button>
+  </div>
+</header>
+<hr/>
+<div id="list"></div>
+
+<script>
+  const i18n = {
+    zh: { t:"房东工单中心", sub:"仅显示与你房源相关的工单", login:"登录", logout:"退出" },
+    en: { t:"Landlord Ticket Center", sub:"Only tickets related to your listings", login:"Login", logout:"Logout" },
+  };
+  let lang = localStorage.getItem('lang') || 'zh';
+  function applyLang(){
+    document.getElementById('t').textContent = i18n[lang].t;
+    document.getElementById('sub').textContent = i18n[lang].sub;
+    document.getElementById('lang').textContent = (lang==='zh')?'EN':'中文';
+  }
+
+  const supabaseUrl = "YOUR_SUPABASE_URL";
+  const supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY";
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+  async function getToken() {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token || null;
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
+
+  function render(r){
+    return `
+      <div class="card">
+        <div><b>${escapeHtml(r.title || '(no title)')}</b>
+          <span class="pill">${escapeHtml(r.type)}</span>
+          <span class="pill">${escapeHtml(r.priority)}</span>
+          <span class="pill">${escapeHtml(r.status)}</span>
+        </div>
+        <div class="muted">listing: ${r.listing_id || '-'}</div>
+        <div style="margin-top:8px;">${escapeHtml(r.content || '')}</div>
+        <div class="muted" style="margin-top:8px;">${new Date(r.created_at).toLocaleString()}</div>
+      </div>
+    `;
+  }
+
+  async function load(){
+    const token = await getToken();
+    document.getElementById('login').style.display = token ? 'none' : '';
+    document.getElementById('logout').style.display = token ? '' : 'none';
+    if (!token) { document.getElementById('list').innerHTML = '<div class="muted">Login required.</div>'; return; }
+
+    const res = await fetch('/.netlify/functions/report_landlord', { headers:{ Authorization:`Bearer ${token}` }});
+    const out = await res.json();
+    document.getElementById('list').innerHTML = out.ok ? (out.reports||[]).map(render).join('') : `<div class="muted">${escapeHtml(out.error||'error')}</div>`;
+  }
+
+  async function quickLogin(){
+    const email = prompt('Email:'); if(!email) return;
+    const password = prompt('Password:'); if(!password) return;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    await load();
+  }
+  async function logout(){ await supabase.auth.signOut(); await load(); }
+
+  document.getElementById('lang').onclick = ()=>{ lang=(lang==='zh')?'en':'zh'; localStorage.setItem('lang',lang); applyLang(); };
+  document.getElementById('login').onclick = quickLogin;
+  document.getElementById('logout').onclick = logout;
+
+  applyLang();
+  load();
+</script>
+</body>
+</html>

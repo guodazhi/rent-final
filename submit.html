@@ -2,136 +2,197 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Submit Listing</title>
   <style>
+    :root { color-scheme: light; }
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 40px;
-      max-width: 520px;
-      margin: 0 auto;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #fff;
+      color: #111;
     }
-    h1 { font-size: 44px; margin: 0 0 20px; }
-    label { display:block; margin: 12px 0 6px; color:#333; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 44px; margin: 8px 0 18px; font-weight: 800; letter-spacing: -0.5px; }
+    label { display: block; margin: 14px 0 6px; font-weight: 600; color: #222; }
     input, textarea {
       width: 100%;
       box-sizing: border-box;
-      padding: 10px;
-      border: 1px solid #bbb;
-      border-radius: 6px;
+      border: 1px solid #cfcfcf;
+      border-radius: 8px;
+      padding: 12px 12px;
       font-size: 16px;
+      outline: none;
+      background: #fff;
     }
-    textarea { min-height: 90px; resize: vertical; }
+    input:focus, textarea:focus { border-color: #7aa7ff; box-shadow: 0 0 0 3px rgba(122,167,255,0.2); }
+    textarea { min-height: 120px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 720px) {
+      h1 { font-size: 34px; }
+      .row, .row3 { grid-template-columns: 1fr; }
+    }
     button {
-      margin-top: 14px;
-      padding: 10px 16px;
+      margin-top: 16px;
+      border: 1px solid #bdbdbd;
+      background: #f2f2f2;
+      padding: 10px 18px;
+      border-radius: 10px;
       font-size: 16px;
-      border: 1px solid #888;
-      border-radius: 6px;
-      background: #f3f3f3;
       cursor: pointer;
     }
-    button:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-    }
-    #msg {
-      margin-top: 12px;
-      white-space: pre-wrap;
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .hint { margin-top: 8px; color: #666; font-size: 14px; }
+    .msg {
+      margin-top: 14px;
+      padding: 12px 12px;
+      border-radius: 10px;
       font-size: 15px;
+      display: none;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-    .hint { margin-top:10px; color:#666; font-size: 13px; }
+    .ok { display: block; background: #eaf7ee; border: 1px solid #b7e1c2; color: #0d6b2b; }
+    .err { display: block; background: #fdecec; border: 1px solid #f3b1b1; color: #9b1c1c; }
+    .nav { margin-top: 18px; display:flex; gap:12px; flex-wrap:wrap; }
+    .nav a { color:#1a73e8; text-decoration:none; font-weight:600; }
+    .nav a:hover { text-decoration:underline; }
+    .tiny { margin-top: 10px; font-size: 12px; color: #888; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
   </style>
 </head>
 <body>
-  <h1>Submit Listing</h1>
+  <div class="wrap">
+    <h1>Submit Listing</h1>
 
-  <form id="listingForm">
-    <label for="title">Title</label>
-    <input id="title" name="title" placeholder="e.g. Master Room" required />
+    <form id="form">
+      <label for="title">Title</label>
+      <input id="title" name="title" placeholder="e.g. Master Room" required />
 
-    <label for="price">Price</label>
-    <input id="price" name="price" type="number" placeholder="e.g. 800" required />
+      <div class="row">
+        <div>
+          <label for="price">Price</label>
+          <input id="price" name="price" placeholder="e.g. 800" inputmode="numeric" required />
+        </div>
+        <div>
+          <label for="location">Location</label>
+          <input id="location" name="location" placeholder="e.g. Brisbane / 西安" required />
+        </div>
+      </div>
 
-    <label for="location">Location</label>
-    <input id="location" name="location" placeholder="e.g. Brisbane / 西安" required />
+      <label for="contact">Contact</label>
+      <input id="contact" name="contact" placeholder="e.g. WeChat / Phone" required />
 
-    <label for="contact">Contact</label>
-    <input id="contact" name="contact" placeholder="e.g. WeChat / Phone" required />
+      <label for="description">Description (optional)</label>
+      <textarea id="description" name="description" placeholder="简单描述一下房源/要求…"></textarea>
 
-    <label for="description">Description (optional)</label>
-    <textarea id="description" name="description" placeholder="简单描述一下房源/要求..."></textarea>
+      <button id="btn" type="submit">Submit</button>
+      <div class="hint">提交后将进入待审核状态，审核通过后会在 Approved Listings 页面显示。</div>
 
-    <button id="submitBtn" type="submit">Submit</button>
-  </form>
+      <div id="msgOk" class="msg ok">✅ Submitted! Waiting for approval…</div>
+      <div id="msgErr" class="msg err"></div>
 
-  <div id="msg"></div>
-  <div class="hint">提交后将进入待审核状态，审核通过后会在 Approved Listings 页面显示。</div>
+      <div class="nav">
+        <a href=" ">Approved Listings</a >
+        <a href="./admin.html">Admin Panel</a >
+        <a href="./index.html">Home</a >
+      </div>
+
+      <div class="tiny mono">
+        API: <span id="apiUrl"></span>
+      </div>
+    </form>
+  </div>
 
   <script>
-    const form = document.getElementById("listingForm");
-    const btn = document.getElementById("submitBtn");
-    const msgEl = document.getElementById("msg");
+    (function () {
+      const form = document.getElementById('form');
+      const btn = document.getElementById('btn');
+      const msgOk = document.getElementById('msgOk');
+      const msgErr = document.getElementById('msgErr');
+      const apiUrlEl = document.getElementById('apiUrl');
 
-    function showMsg(text, ok = true) {
-      msgEl.style.color = ok ? "#0b6b2a" : "#b00020";
-      msgEl.textContent = text;
-    }
+      // Netlify Functions endpoint（同域）
+      const API = '/.netlify/functions/submit';
+      apiUrlEl.textContent = API;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      // 防重复提交
-      btn.disabled = true;
-      showMsg("Submitting...", true);
-
-      const payload = {
-        title: form.title.value.trim(),
-        price: Number(form.price.value),
-        location: form.location.value.trim(),
-        contact: form.contact.value.trim(),
-        description: form.description.value.trim()
-      };
-
-      // 基本校验
-      if (!payload.title || !payload.location || !payload.contact || !payload.price) {
-        showMsg("❌ Please fill in Title/Price/Location/Contact.", false);
-        btn.disabled = false;
-        return;
+      function showOk(text) {
+        msgErr.style.display = 'none';
+        msgOk.style.display = 'block';
+        msgOk.textContent = text || '✅ Submitted! Waiting for approval…';
       }
 
-      try {
-        const res = await fetch("/.netlify/functions/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+      function showErr(text) {
+        msgOk.style.display = 'none';
+        msgErr.style.display = 'block';
+        msgErr.textContent = text || '❌ Submission failed';
+      }
 
-        let out = null;
-        try { out = await res.json(); } catch (_) {}
+      function normalizePrice(v) {
+        // 允许 "1,280" / "1280" / "1280.50"
+        const s = String(v || '').trim().replace(/,/g, '');
+        if (!s) return null;
+        const n = Number(s);
+        if (!Number.isFinite(n) || n <= 0) return null;
+        return n;
+      }
 
-        if (!res.ok) {
-          const errMsg = (out && (out.error || out.message)) ? (out.error || out.message) : ("HTTP " + res.status);
-          showMsg("❌ " + errMsg, false);
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msgOk.style.display = 'none';
+        msgErr.style.display = 'none';
+
+        const title = document.getElementById('title').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const contact = document.getElementById('contact').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const priceNum = normalizePrice(document.getElementById('price').value);
+
+        // 前端必填校验（避免你看到“undefined”）
+        if (!title) return showErr('请填写 Title。');
+        if (!priceNum) return showErr('请填写正确的 Price（必须是正数）。');
+        if (!location) return showErr('请填写 Location。');
+        if (!contact) return showErr('请填写 Contact。');
+
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        const payload = { title, price: priceNum, location, contact, description };
+
+        try {
+          const res = await fetch(API, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          // 先拿到原始文本，避免后端返回 HTML / 502 时 JSON.parse 直接炸
+          const raw = await res.text();
+
+          // 尝试解析 JSON（解析失败就把 raw 当错误信息展示）
+          let data = null;
+          try { data = raw ? JSON.parse(raw) : null; } catch (_) {}
+
+          if (!res.ok) {
+            const detail = (data && (data.error || data.message)) ? (data.error || data.message) : raw;
+            return showErr(`❌ 提交失败（HTTP ${res.status}）\n${detail || 'No details'}`);
+          }
+
+          // 成功
+          showOk('✅ Submitted! Waiting for approval…');
+          form.reset();
+        } catch (err) {
+          showErr('❌ 网络或函数错误：\n' + (err && err.message ? err.message : String(err)));
+        } finally {
           btn.disabled = false;
-          return;
+          btn.textContent = 'Submit';
         }
-
-        showMsg("✅ Submitted! Waiting for approval...", true);
-        form.reset();
-
-        // 可选：成功后跳转到 approved 页面
-        setTimeout(() => {
-          window.location.href = "/approved.html";
-        }, 1500);
-
-      } catch (err) {
-        showMsg("❌ Network error. Please try again.", false);
-      } finally {
-        // 如果你不想跳转，也会恢复按钮
-        btn.disabled = false;
-      }
-    });
+      });
+    })();
   </script>
 </body>
 </html>

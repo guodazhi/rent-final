@@ -1,249 +1,282 @@
 <!doctype html>
-<html lang="zh-CN" data-lang="zh">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>发布房源 · 翱翔安居</title>
 
+  <!-- ✅ 每个页面都要加的脚本（放在 head） -->
   <script src="assets/config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{
-      --bg:#f6f8fb; --card:#ffffffcc; --text:#111827; --muted:#6b7280;
-      --line:#e5e7eb; --primary:#2563eb; --shadow:0 10px 30px rgba(17,24,39,.08);
-      --radius:16px;
-    }
+    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--pri:#2563eb;--pri2:#1d4ed8;--shadow:0 10px 30px rgba(17,24,39,.08);--r:16px;}
     *{box-sizing:border-box}
-    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft Yahei",sans-serif;
-      background: radial-gradient(1200px 600px at 15% 0%, #eaf2ff 0%, transparent 55%),
-                  radial-gradient(900px 500px at 85% 10%, #e9fff2 0%, transparent 50%),
-                  var(--bg);
-      color:var(--text); padding-bottom:74px;
-    }
-    .topbar{position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
-      background:linear-gradient(to bottom, rgba(246,248,251,.92), rgba(246,248,251,.72));
-      border-bottom:1px solid var(--line);
-    }
-    .topbar .inner{max-width:980px; margin:0 auto; padding:10px 16px; display:flex; align-items:center; gap:12px;}
-    .back{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;}
-    .brand{display:flex;align-items:center;gap:10px;}
-    .logo{width:34px;height:34px;border-radius:10px;object-fit:cover;background:#fff;border:1px solid var(--line);}
-    .t1{font-weight:900;font-size:14px;line-height:1.1}
-    .t2{font-size:12px;color:var(--muted)}
-    .spacer{flex:1}
-    .btn{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
-    .btn.primary{background:var(--primary);color:#fff;border-color:transparent;}
-    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 24px;}
-    .card{background:var(--card);border:1px solid rgba(229,231,235,.85);border-radius:var(--radius);box-shadow:var(--shadow);}
-    .hd{padding:16px 16px 10px;}
-    .h1{font-size:22px;font-weight:900;margin:0;}
-    .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .form{padding:14px 16px 16px;}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-    @media(max-width:720px){.row{grid-template-columns:1fr;}}
-    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;}
-    input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;font-size:14px;}
-    textarea{min-height:110px;resize:vertical;}
-    .actions{display:flex;gap:10px;align-items:center;margin-top:12px;}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial;background:var(--bg);color:var(--text)}
+    .topbar{position:sticky;top:0;z-index:20;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+    .topbar-inner{max-width:980px;margin:0 auto;padding:12px 14px;display:flex;align-items:center;gap:12px}
+    .btn-ghost{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer}
+    .brand{display:flex;align-items:center;gap:10px;min-width:260px}
+    .logo{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;object-fit:cover}
+    .brand h1{margin:0;font-size:14px}
+    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+    .sp{flex:1}
+    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-size:12px;cursor:pointer}
+    .btn{border:1px solid transparent;background:var(--pri);color:#fff;border-radius:12px;padding:9px 12px;cursor:pointer;font-weight:700}
+    .btn:hover{background:var(--pri2)}
+    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 90px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px}
+    .title{font-size:20px;margin:0 0 4px}
+    .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:860px){.grid{grid-template-columns:repeat(2,1fr)}}
+    .field label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    .field input,.field select,.field textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;outline:none}
+    textarea{min-height:110px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .btn-lite{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer}
     .hint{font-size:12px;color:var(--muted)}
-    .tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 12px;z-index:20;}
-    .tabs{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-    .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 6px;border-radius:14px;border:1px solid transparent;color:var(--muted);font-size:12px;text-decoration:none;}
-    .tab.active{background:#eef2ff;border-color:#dbeafe;color:#1d4ed8;font-weight:900;}
-    .tab .ic{font-size:16px;line-height:1;}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:50;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;display:none;box-shadow:0 10px 24px rgba(0,0,0,.2);}
+    .warn{margin-top:10px;color:#b45309;font-size:12px;display:flex;gap:8px;align-items:center}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line)}
+    .nav-inner{max-width:980px;margin:0 auto;display:flex}
+    .nav a{flex:1;padding:10px 6px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center}
+    .nav a.active{color:var(--pri);font-weight:800}
+    .ico{font-size:16px}
+    .modal-mask{position:fixed;inset:0;background:rgba(17,24,39,.45);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal{width:min(520px,92vw);background:#fff;border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow);padding:14px}
+    .x{float:right;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+    .small{font-size:12px;color:var(--muted)}
+    .ok{color:#065f46}.err{color:#b91c1c}
   </style>
-
-  <script>
-    const I18N = {
-      zh: { appName:"翱翔安居 · XATU", appDesc:"发布房源（提交后进入审核）", title:"发布房源", sub:"请填写真实信息，提交后会进入待审核", submit:"提交", login:"登录", en:"EN" },
-      en: { appName:"AoXiang Housing · XATU", appDesc:"Submit Listing (pending review)", title:"Submit Listing", sub:"Fill in details. After submit it will be reviewed.", submit:"Submit", login:"Login", en:"ZH" }
-    };
-    function getLang(){ return localStorage.getItem("lang") || "zh"; }
-    function setLang(lang){ localStorage.setItem("lang",lang); document.documentElement.dataset.lang=lang; applyI18n(); }
-    function t(k){ return (I18N[getLang()]&&I18N[getLang()][k]) || I18N.zh[k] || k; }
-    function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg; el.style.display="block"; clearTimeout(window.__t); window.__t=setTimeout(()=>el.style.display="none",2200); }
-    function goBack(){ if(history.length>1) history.back(); else location.href="/"; }
-
-    function getSupabase(){
-      const cfg=window.APP_CONFIG||{};
-      if(!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) return null;
-      return window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-    }
-
-    function applyI18n(){
-      document.getElementById("appName").textContent=t("appName");
-      document.getElementById("appDesc").textContent=t("appDesc");
-      document.getElementById("pageTitle").textContent=t("title");
-      document.getElementById("pageSub").textContent=t("sub");
-      document.getElementById("btnSubmit").textContent=t("submit");
-      document.getElementById("btnLang").textContent=t("en");
-      document.getElementById("btnLogin").textContent=t("login");
-    }
-
-    async function submitListing(){
-      const sb=getSupabase();
-      if(!sb){ toast("未配置 Supabase（assets/config.js）"); return; }
-
-      // 可匿名提交也行；如果你要强制登录，把下面 uid 判断打开即可
-      const { data: sessionData } = await sb.auth.getSession();
-      const uid = sessionData?.session?.user?.id || null;
-
-      const payload = {
-        title: document.getElementById("f_title").value.trim(),
-        price: Number(document.getElementById("f_price").value || 0),
-        location: document.getElementById("f_location").value.trim(),
-        contact: document.getElementById("f_contact").value.trim(),
-        campus: document.getElementById("f_campus").value,
-        rent_type: document.getElementById("f_type").value,
-        bathroom: document.getElementById("f_bath").value,
-        metro: document.getElementById("f_metro").value,
-        description: document.getElementById("f_desc").value.trim(),
-        user_id: uid
-      };
-
-      if(!payload.title || !payload.location || !payload.contact){
-        toast("请至少填写：标题 / 位置 / 联系方式");
-        return;
-      }
-
-      const { error } = await sb.from("listings").insert(payload);
-      if(error){ toast("提交失败：" + error.message); return; }
-
-      toast("提交成功：已进入待审核");
-      setTimeout(()=> location.href="/", 600);
-    }
-
-    function bindCommon(){
-      document.getElementById("btnBack").addEventListener("click", goBack);
-      document.getElementById("btnLang").addEventListener("click", ()=> setLang(getLang()==="zh"?"en":"zh"));
-      document.getElementById("btnLogin").addEventListener("click", ()=> toast("登录入口已保留（下一步接 Supabase Auth）"));
-
-      document.getElementById("tabHome").onclick=()=>location.href="/";
-      document.getElementById("tabSubmit").onclick=()=>location.href="/submit";
-      document.getElementById("tabFav").onclick=()=>location.href="/favorites";
-      document.getElementById("tabSupport").onclick=()=>location.href="/support";
-
-      document.getElementById("btnSubmit").addEventListener("click", submitListing);
-    }
-
-    window.addEventListener("DOMContentLoaded", ()=>{
-      document.documentElement.dataset.lang=getLang();
-      applyI18n();
-      bindCommon();
-      document.querySelector('[data-tab="submit"]').classList.add("active");
-    });
-  </script>
 </head>
 
 <body>
   <div class="topbar">
-    <div class="inner">
-      <button class="back" id="btnBack" title="Back">←</button>
-
+    <div class="topbar-inner">
+      <button class="btn-ghost" id="btnBack">← 返回</button>
       <div class="brand">
         <img class="logo" src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
         <div>
-          <div class="t1" id="appName">翱翔安居 · XATU</div>
-          <div class="t2" id="appDesc">发布房源（提交后进入审核）</div>
+          <h1>翱翔安居 · XATU</h1>
+          <p>发布房源（提交后进入审核）</p>
         </div>
       </div>
-
-      <div class="spacer"></div>
-
-      <button class="btn" id="btnLang">EN</button>
-      <button class="btn primary" id="btnLogin">登录</button>
+      <div class="sp"></div>
+      <button class="chip" id="btnMe">👤 我的</button>
+      <button class="chip" id="btnLang">EN</button>
+      <button class="btn" id="btnLogin">登录</button>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="card">
-      <div class="hd">
-        <h1 class="h1" id="pageTitle">发布房源</h1>
-        <p class="sub" id="pageSub">请填写真实信息，提交后会进入待审核</p>
-      </div>
+    <div class="panel">
+      <h2 class="title">发布房源</h2>
+      <p class="sub">请填写真实信息，提交后进入待审核</p>
 
-      <div class="form">
-        <div class="row">
-          <div>
-            <label>标题 / Title</label>
-            <input id="f_title" placeholder="e.g. 主卧 / Master Room" />
-          </div>
-          <div>
-            <label>价格 / Price</label>
-            <input id="f_price" type="number" placeholder="e.g. 800" />
-          </div>
+      <div class="grid">
+        <div class="field">
+          <label>标题 / Title</label>
+          <input id="title" placeholder="e.g. 主卧 / Master Room" />
+        </div>
+        <div class="field">
+          <label>价格 / Price</label>
+          <input id="price" placeholder="e.g. 800" />
         </div>
 
-        <div class="row" style="margin-top:10px;">
-          <div>
-            <label>位置 / Location</label>
-            <input id="f_location" placeholder="e.g. 校门口 / 友谊校区附近" />
-          </div>
-          <div>
-            <label>联系方式 / Contact</label>
-            <input id="f_contact" placeholder="e.g. WeChat / Phone" />
-          </div>
+        <div class="field">
+          <label>位置 / Location</label>
+          <input id="location" placeholder="e.g. 校门口 / 友谊校区附近" />
+        </div>
+        <div class="field">
+          <label>联系方式 / Contact（微信/电话）</label>
+          <input id="contact" placeholder="e.g. WeChat / Phone" />
         </div>
 
-        <div class="row" style="margin-top:10px;">
-          <div>
-            <label>校区 / Campus</label>
-            <select id="f_campus">
-              <option value="友谊校区">友谊校区</option>
-              <option value="未央校区">未央校区</option>
-              <option value="金花校区">金花校区</option>
-            </select>
-          </div>
-          <div>
-            <label>整租/合租</label>
-            <select id="f_type">
-              <option value="合租">合租</option>
-              <option value="整租">整租</option>
-            </select>
-          </div>
+        <div class="field">
+          <label>校区 / Campus</label>
+          <select id="campus">
+            <option value="友谊校区">友谊校区</option>
+            <option value="未央校区">未央校区</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>整租/合租</label>
+          <select id="rent_type">
+            <option value="整租">整租</option>
+            <option value="合租">合租</option>
+          </select>
         </div>
 
-        <div class="row" style="margin-top:10px;">
-          <div>
-            <label>独卫/公卫</label>
-            <select id="f_bath">
-              <option value="公卫">公卫</option>
-              <option value="独卫">独卫</option>
-            </select>
-          </div>
-          <div>
-            <label>地铁</label>
-            <select id="f_metro">
-              <option value="近地铁">近地铁</option>
-              <option value="不限">不限</option>
-            </select>
-          </div>
+        <div class="field">
+          <label>独卫/公卫</label>
+          <select id="bathroom">
+            <option value="独卫">独卫</option>
+            <option value="公卫">公卫</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>地铁</label>
+          <select id="metro">
+            <option value="近地铁">近地铁</option>
+            <option value="不限">不限</option>
+          </select>
         </div>
 
-        <div style="margin-top:10px;">
+        <div class="field" style="grid-column:1/-1">
           <label>描述（可选）</label>
-          <textarea id="f_desc" placeholder="房型、朝向、楼层、是否可短租、押金方式、照片链接等…"></textarea>
-        </div>
-
-        <div class="actions">
-          <button class="btn primary" id="btnSubmit">提交</button>
-          <span class="hint">提交后进入待审核，审核通过后出现在首页</span>
+          <textarea id="description" placeholder="房型、朝向、楼层、是否可短租、押金方式、照片链接等…"></textarea>
         </div>
       </div>
+
+      <div class="row">
+        <button class="btn" id="submitBtn">提交</button>
+        <button class="btn-lite" id="resetBtn">清空</button>
+        <span class="hint" id="msg"></span>
+      </div>
+
+      <div class="warn" id="warn" style="display:none">⚠️ <span id="warnText"></span></div>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
-
-  <div class="tabbar">
-    <div class="tabs">
-      <a class="tab" data-tab="home" id="tabHome"><div class="ic">🏠</div><div>租房</div></a>
-      <a class="tab active" data-tab="submit" id="tabSubmit"><div class="ic">➕</div><div>发布</div></a>
-      <a class="tab" data-tab="fav" id="tabFav"><div class="ic">⭐</div><div>收藏</div></a>
-      <a class="tab" data-tab="support" id="tabSupport"><div class="ic">💬</div><div>客服</div></a>
+  <div class="nav">
+    <div class="nav-inner">
+      <a href="./index.html"><div class="ico">🏠</div><div>租房</div></a>
+      <a class="active" href="./submit.html"><div class="ico">➕</div><div>发布</div></a>
+      <a href="./favorites.html"><div class="ico">⭐</div><div>收藏</div></a>
+      <a href="./support.html"><div class="ico">💬</div><div>客服</div></a>
     </div>
   </div>
+
+  <!-- Login modal（同首页，简化复用） -->
+  <div class="modal-mask" id="mask">
+    <div class="modal">
+      <button class="x" id="closeMask">✕</button>
+      <h3>登录 / 注册</h3>
+      <div class="small">先用 Email+Password 跑通</div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Email</label>
+        <input id="authEmail" placeholder="name@example.com" />
+      </div>
+      <div class="field">
+        <label>密码</label>
+        <input id="authPass" type="password" placeholder="********" />
+      </div>
+
+      <div class="row">
+        <button class="btn" id="doSignIn">登录</button>
+        <button class="btn-lite" id="doSignUp">注册</button>
+        <button class="btn-lite" id="doSignOut">退出</button>
+      </div>
+      <div class="small" id="authMsg"></div>
+    </div>
+  </div>
+
+  <script>
+    const LANG_KEY="xatu_lang";
+    function getLang(){return localStorage.getItem(LANG_KEY)||"zh";}
+    function setLang(v){localStorage.setItem(LANG_KEY,v);location.reload();}
+
+    function cfgOk(){
+      return window.APP_CONFIG
+        && typeof window.APP_CONFIG.SUPABASE_URL==="string"
+        && window.APP_CONFIG.SUPABASE_URL.startsWith("http")
+        && typeof window.APP_CONFIG.SUPABASE_ANON_KEY==="string"
+        && window.APP_CONFIG.SUPABASE_ANON_KEY.length>20;
+    }
+    const sb = cfgOk() ? supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY) : null;
+
+    function back(){ if(history.length>1) history.back(); else location.href="./index.html"; }
+    document.getElementById("btnBack").onclick=back;
+    document.getElementById("btnLang").onclick=()=>setLang(getLang()==="en"?"zh":"en");
+
+    // auth modal
+    const mask=document.getElementById("mask");
+    function openAuth(){mask.style.display="flex";}
+    function closeAuth(){mask.style.display="none";}
+    document.getElementById("btnLogin").onclick=openAuth;
+    document.getElementById("btnMe").onclick=openAuth;
+    document.getElementById("closeMask").onclick=closeAuth;
+    mask.addEventListener("click",(e)=>{ if(e.target===mask) closeAuth(); });
+
+    function setAuthMsg(s,cls){ const el=document.getElementById("authMsg"); el.className="small "+(cls||""); el.textContent=s||""; }
+    async function refreshAuthUI(){
+      const btn=document.getElementById("btnLogin");
+      if(!sb){btn.textContent="登录"; return;}
+      const {data}=await sb.auth.getUser();
+      btn.textContent = data?.user ? (getLang()==="en"?"Logged":"已登录") : (getLang()==="en"?"Login":"登录");
+    }
+    document.getElementById("doSignUp").onclick=async()=>{
+      if(!sb) return alert("请先配置 assets/config.js");
+      try{
+        const email=document.getElementById("authEmail").value.trim();
+        const password=document.getElementById("authPass").value;
+        const {error}=await sb.auth.signUp({email,password});
+        if(error) throw error;
+        setAuthMsg("OK: sign up success","ok");
+      }catch(e){ setAuthMsg("ERR: "+(e.message||e),"err"); }
+    };
+    document.getElementById("doSignIn").onclick=async()=>{
+      if(!sb) return alert("请先配置 assets/config.js");
+      try{
+        const email=document.getElementById("authEmail").value.trim();
+        const password=document.getElementById("authPass").value;
+        const {error}=await sb.auth.signInWithPassword({email,password});
+        if(error) throw error;
+        setAuthMsg("OK: signed in","ok");
+        await refreshAuthUI(); closeAuth();
+      }catch(e){ setAuthMsg("ERR: "+(e.message||e),"err"); }
+    };
+    document.getElementById("doSignOut").onclick=async()=>{
+      if(!sb) return;
+      await sb.auth.signOut();
+      setAuthMsg("OK: signed out","ok");
+      await refreshAuthUI();
+    };
+
+    function warn(msg){
+      document.getElementById("warnText").textContent=msg;
+      document.getElementById("warn").style.display="flex";
+    }
+    function clearWarn(){ document.getElementById("warn").style.display="none"; }
+
+    document.getElementById("resetBtn").onclick=()=>{
+      ["title","price","location","contact","description"].forEach(id=>document.getElementById(id).value="");
+      clearWarn(); document.getElementById("msg").textContent="";
+    };
+
+    document.getElementById("submitBtn").onclick=async()=>{
+      clearWarn();
+      if(!sb) return warn("未配置 Supabase：请先填写 assets/config.js");
+      const {data:ud}=await sb.auth.getUser();
+      if(!ud?.user) return warn("请先登录后发布（右上角 登录）");
+
+      const payload={
+        title: document.getElementById("title").value.trim(),
+        price: Number(document.getElementById("price").value.trim()||0),
+        location: document.getElementById("location").value.trim(),
+        contact: document.getElementById("contact").value.trim(),
+        campus: document.getElementById("campus").value,
+        rent_type: document.getElementById("rent_type").value,
+        bathroom: document.getElementById("bathroom").value,
+        metro: document.getElementById("metro").value,
+        description: document.getElementById("description").value.trim(),
+        landlord_id: ud.user.id
+      };
+
+      if(!payload.title || !payload.price || !payload.contact) return warn("标题 / 价格 / 联系方式 必填");
+
+      try{
+        const {error}=await sb.from("listings").insert(payload);
+        if(error) throw error;
+        document.getElementById("msg").textContent = "✅ 已提交，等待审核";
+        setTimeout(()=>location.href="./index.html", 700);
+      }catch(e){
+        warn("提交失败："+(e.message||e));
+      }
+    };
+
+    refreshAuthUI();
+  </script>
 </body>
 </html>

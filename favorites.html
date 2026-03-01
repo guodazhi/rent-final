@@ -1,19 +1,199 @@
-<!doctype html><html lang="zh"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Favorites</title><link rel="icon" href="favicon.ico"/><link rel="stylesheet" href="assets/styles.css"/>
-</head><body>
-<div class="topbar"><div class="brand">< img src="assets/logo.png" onerror="this.style.display='none'"><span data-i18n="brand"></span></div><button class="lang" id="langBtn"></button></div>
-<div class="wrap"><div class="h1" data-i18n="navFav"></div><div id="favList" class="grid"></div></div>
-<div class="nav">
-<a href=" "><div>🏠</div><div data-i18n="navRent"></div></a >
-<a href="submit.html"><div>➕</div><div data-i18n="navSubmit"></div></a >
-<a class="active" href="favorites.html"><div>⭐</div><div data-i18n="navFav"></div></a >
-<a href="support.html"><div>💬</div><div data-i18n="navSupport"></div></a >
-</div>
-<script src="assets/i18n.js"></script><script src="assets/app.js"></script>
-<script>
-I18N_HELPER.applyI18n();
-langBtn.onclick=()=>I18N_HELPER.setLang(I18N_HELPER.getLang()==="zh"?"en":"zh");
-APP.loadFavorites();
-</script>
-</body></html>
+<!doctype html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>收藏 · 翱翔安居</title>
+  <meta name="theme-color" content="#f7f7fb" />
+
+  <!-- ✅ 每个页面都要加的脚本（放在 <head> 里） -->
+  <script defer src="assets/config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{--bg:#f7f7fb;--card:#fff;--text:#121826;--muted:#6b7280;--line:#e5e7eb;--brand:#2563eb;--brand2:#0ea5e9;--shadow:0 10px 30px rgba(17,24,39,.08);--radius:18px;}
+    *{box-sizing:border-box} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text)}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(247,247,251,.78);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line)}
+    .topbar-inner{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:34px;height:34px;border-radius:10px;overflow:hidden;background:#fff;border:1px solid var(--line);display:grid;place-items:center}
+    .logo img{width:100%;height:100%;object-fit:cover}
+    .brand h1{margin:0;font-size:15px;font-weight:900}
+    .brand small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}
+    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));border:0;color:#fff}
+    .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+    .pill b{color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 90px}
+    .hero h2{margin:0;font-size:24px} .hero p{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .cards{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:12px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    .item{grid-column:span 4}
+    .item h3{margin:0 0 8px;font-size:16px}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+    .tag{padding:5px 8px;border-radius:999px;border:1px solid var(--line);background:#fff}
+    .price{font-weight:900;font-size:18px;margin-top:10px}
+    .tools{display:flex;gap:8px;margin-top:12px}
+    .tools .btn{flex:1}
+    .hint{font-size:12px;color:var(--muted)}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;max-width:92vw}
+    .toast.show{opacity:1}
+    .nav{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);border-top:1px solid var(--line)}
+    .nav-inner{max-width:980px;margin:0 auto;display:flex;justify-content:space-around;padding:10px 12px}
+    .nav a{width:25%;text-align:center;color:var(--muted);font-size:12px;font-weight:900;padding:6px 0;border-radius:12px}
+    .nav a.active{color:var(--brand)}
+    .nav .ico{display:block;font-size:18px;margin-bottom:4px}
+    @media (max-width:860px){.item{grid-column:span 6}} @media (max-width:520px){.item{grid-column:span 12}}
+  </style>
+
+  <script>
+    const I18N={zh:{appName:"翱翔安居 · XATU",appSub:"我的收藏",title:"收藏",sub:"这里显示你收藏的房源",needLogin:"请先登录查看收藏",empty:"你还没有收藏任何房源",lang:"EN",login:"登录",logout:"退出",rent:"租房",submit:"发布",favorites:"收藏",support:"客服"},
+               en:{appName:"Aoxiang Housing · XATU",appSub:"My favorites",title:"Favorites",sub:"Your saved listings",needLogin:"Please login to view favorites",empty:"No favorites yet",lang:"中文",login:"Login",logout:"Logout",rent:"Rent",submit:"Post",favorites:"Favorites",support:"Support"}};
+    const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+    function getLang(){return localStorage.getItem("APP_LANG")||"zh"} function setLang(l){localStorage.setItem("APP_LANG",l);document.documentElement.setAttribute("data-lang",l);applyI18n()}
+    function t(k){return (I18N[getLang()]&&I18N[getLang()][k])||I18N.zh[k]||k}
+    function showToast(m){const el=$("#toast");el.textContent=m;el.classList.add("show");clearTimeout(window.__tt);window.__tt=setTimeout(()=>el.classList.remove("show"),2200)}
+    function getSupabase(){ if(!window.APP_CONFIG||!APP_CONFIG.SUPABASE_URL||!APP_CONFIG.SUPABASE_ANON_KEY) return null; if(!window.__sb) window.__sb=supabase.createClient(APP_CONFIG.SUPABASE_URL,APP_CONFIG.SUPABASE_ANON_KEY); return window.__sb; }
+    function applyI18n(){
+      $("#appTitle").textContent=t("appName"); $("#appSub").textContent=t("appSub");
+      $("#pageTitle").textContent=t("title"); $("#pageSub").textContent=t("sub");
+      $("#btnLang").textContent=t("lang");
+      $("#btnAuth").textContent=t("login"); $("#btnLogout").textContent=t("logout");
+      $("#navRentTxt").textContent=t("rent"); $("#navSubmitTxt").textContent=t("submit"); $("#navFavTxt").textContent=t("favorites"); $("#navSupportTxt").textContent=t("support");
+      $("#emptyRow").textContent=t("empty");
+    }
+    function setActiveNav(){ const path=location.pathname.split("/").pop()||"favorites.html"; $$("#bottomNav a").forEach(a=>a.classList.toggle("active",a.getAttribute("data-page")===path)); }
+
+    async function refreshUserUI(){
+      const sb=getSupabase(); if(!sb){showToast("Not configured"); $("#btnAuth").style.display="none"; $("#btnLogout").style.display="none"; return;}
+      const {data:{user}}=await sb.auth.getUser();
+      if(user){ $("#userPill").innerHTML=`<span>✅</span><b>${user.email||"User"}</b>`; $("#btnAuth").style.display="none"; $("#btnLogout").style.display="inline-block"; }
+      else{ $("#userPill").innerHTML=`<span>👤</span><b>${t("login")}</b>`; $("#btnAuth").style.display="inline-block"; $("#btnLogout").style.display="none"; }
+      return user;
+    }
+
+    function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,(c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));}
+
+    async function loadFavorites(){
+      const sb=getSupabase();
+      const {data:{user}}=await sb.auth.getUser();
+      if(!user){
+        $("#hintRow").textContent=t("needLogin");
+        $("#emptyRow").style.display="block";
+        return;
+      }
+
+      $("#hintRow").textContent="Loading…";
+      $("#emptyRow").style.display="none";
+      $("#cards").innerHTML="";
+
+      // 先取 favorites
+      const { data:favs, error:favErr } = await sb.from("favorites").select("listing_id").eq("user_id", user.id);
+      if(favErr){ showToast(favErr.message); return; }
+      const ids = (favs||[]).map(x=>x.listing_id);
+      if(ids.length===0){ $("#hintRow").textContent=""; $("#emptyRow").style.display="block"; return; }
+
+      const { data:listings, error } = await sb.from("listings").select("*").in("id", ids).order("created_at",{ascending:false});
+      $("#hintRow").textContent="";
+      if(error){ showToast(error.message); return; }
+
+      $("#cards").innerHTML = (listings||[]).map(x=>{
+        const price = (x.price!=null) ? `$${x.price}` : "";
+        const tags = [
+          x.campus ? `<span class="tag">${x.campus}</span>` : "",
+          x.rent_type ? `<span class="tag">${x.rent_type}</span>` : "",
+          x.bath_type ? `<span class="tag">${x.bath_type}</span>` : "",
+          x.metro ? `<span class="tag">${x.metro}</span>` : "",
+        ].join("");
+        return `
+          <div class="card item" data-id="${x.id}">
+            <h3>${escapeHtml(x.title||"")}</h3>
+            <div class="meta">
+              ${tags}
+              ${x.location ? `<span class="tag">📍 ${escapeHtml(x.location)}</span>`:""}
+            </div>
+            <div class="price">${price}</div>
+            <div class="tools">
+              <button class="btn" data-action="unfav">取消收藏</button>
+              <button class="btn primary" data-action="contact">联系</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      $$("#cards [data-action='unfav']").forEach(b=>b.addEventListener("click", async (e)=>{
+        const id=e.target.closest(".item").getAttribute("data-id");
+        await sb.from("favorites").delete().eq("user_id", user.id).eq("listing_id", id);
+        showToast("OK");
+        loadFavorites();
+      }));
+      $$("#cards [data-action='contact']").forEach(b=>b.addEventListener("click", async (e)=>{
+        const id=e.target.closest(".item").getAttribute("data-id");
+        const {data} = await sb.from("listings").select("contact").eq("id", id).maybeSingle();
+        const contact = data?.contact || "";
+        try{ await navigator.clipboard.writeText(contact); showToast("Copied: "+contact); }catch{ alert("Contact: "+contact); }
+      }));
+    }
+
+    document.addEventListener("DOMContentLoaded", async ()=>{
+      setActiveNav();
+      setLang(getLang());
+      applyI18n();
+
+      $("#btnLang").addEventListener("click", ()=>setLang(getLang()==="zh"?"en":"zh"));
+      $("#btnAuth").addEventListener("click", ()=>location.href="index.html#login");
+      $("#btnLogout").addEventListener("click", async ()=>{const sb=getSupabase(); await sb.auth.signOut(); showToast("OK"); await refreshUserUI(); loadFavorites();});
+
+      const sb=getSupabase();
+      if(!sb){ showToast("Not configured"); return; }
+      sb.auth.onAuthStateChange(async ()=>{ await refreshUserUI(); await loadFavorites(); });
+      await refreshUserUI();
+      await loadFavorites();
+    });
+  </script>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo"><img src="assets/logo.png" alt="logo" onerror="this.style.display='none'"></div>
+        <div>
+          <h1 id="appTitle">翱翔安居 · XATU</h1>
+          <small id="appSub">我的收藏</small>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="pill" id="userPill"><span>👤</span><b>登录</b></div>
+        <button class="btn" id="btnLang">EN</button>
+        <button class="btn primary" id="btnAuth">登录</button>
+        <button class="btn" id="btnLogout" style="display:none">退出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <h2 id="pageTitle">收藏</h2>
+      <p id="pageSub">这里显示你收藏的房源</p>
+    </div>
+
+    <div class="hint" id="hintRow" style="margin-top:10px"></div>
+    <div class="hint" id="emptyRow" style="display:none; margin-top:10px">你还没有收藏任何房源</div>
+
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="nav">
+    <div class="nav-inner" id="bottomNav">
+      <a href="index.html" data-page="index.html"><span class="ico">🏠</span><span id="navRentTxt">租房</span></a>
+      <a href="submit.html" data-page="submit.html"><span class="ico">➕</span><span id="navSubmitTxt">发布</span></a>
+      <a href="favorites.html" data-page="favorites.html" class="active"><span class="ico">⭐</span><span id="navFavTxt">收藏</span></a>
+      <a href="support.html" data-page="support.html"><span class="ico">💬</span><span id="navSupportTxt">客服</span></a>
+    </div>
+  </div>
+</body>
+</html>

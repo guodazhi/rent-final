@@ -1,625 +1,710 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-lang="zh">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>翱翔安居 · XATU</title>
-  <meta name="description" content="西安工业大学学生租房平台" />
+  <meta name="theme-color" content="#f7f7fb" />
+
+  <!-- ✅ 每个页面都要加的脚本（放在 <head> 里） -->
+  <script defer src="assets/config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --brand:#2563eb;
-      --brand2:#0ea5e9;
-      --shadow: 0 10px 30px rgba(17,24,39,.08);
-      --radius: 16px;
+      --bg:#f7f7fb; --card:#ffffff; --text:#121826; --muted:#6b7280;
+      --line:#e5e7eb; --brand:#2563eb; --brand2:#0ea5e9;
+      --ok:#10b981; --warn:#f59e0b; --danger:#ef4444;
+      --shadow:0 10px 30px rgba(17,24,39,.08);
+      --radius:18px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:var(--text);
-      background: radial-gradient(1200px 600px at 20% -10%, rgba(37,99,235,.10), transparent 60%),
-                  radial-gradient(900px 500px at 95% 0%, rgba(14,165,233,.10), transparent 55%),
-                  var(--bg);
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:var(--bg); color:var(--text);
     }
-    a{color:inherit;text-decoration:none}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 90px}
+    a{color:inherit; text-decoration:none}
+    .wrap{max-width:980px; margin:0 auto; padding:18px 16px 90px;}
     .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      background:rgba(255,255,255,.72);
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(229,231,235,.8);
-      border-radius: 18px;
-      padding:12px 14px;
-      box-shadow: var(--shadow);
-      position:sticky; top:10px; z-index:20;
+      position:sticky; top:0; z-index:50;
+      backdrop-filter:saturate(180%) blur(10px);
+      background:rgba(247,247,251,.78);
+      border-bottom:1px solid var(--line);
     }
+    .topbar-inner{max-width:980px; margin:0 auto; padding:10px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
     .brand{
-      display:flex;align-items:center;gap:10px;min-width:200px;
+      display:flex; align-items:center; gap:10px; min-width:220px;
     }
-    .brand img{
-      width:38px;height:38px;border-radius:12px;object-fit:cover;
-      border:1px solid rgba(229,231,235,.9);
-      background:#fff;
+    .logo{
+      width:34px; height:34px; border-radius:10px; overflow:hidden; background:#fff; border:1px solid var(--line);
+      display:grid; place-items:center;
     }
-    .brand .t1{font-weight:800;letter-spacing:.2px}
-    .brand .t2{font-size:12px;color:var(--muted);margin-top:2px}
-    .right{
-      display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;
-    }
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid rgba(229,231,235,.9);
-      background:#fff;
-      padding:9px 11px;border-radius:999px;
-      box-shadow: 0 6px 18px rgba(17,24,39,.05);
-      font-size:14px;
-    }
-    .pill select,.pill button{
-      border:none;background:transparent;font:inherit;outline:none;cursor:pointer;
-      color:var(--text);
-    }
+    .logo img{width:100%; height:100%; object-fit:cover}
+    .brand h1{font-size:15px; margin:0; font-weight:800; letter-spacing:.2px}
+    .brand small{display:block; font-size:12px; color:var(--muted); margin-top:2px}
+    .actions{display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap}
     .btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:8px;
-      padding:10px 12px;border-radius:12px;border:1px solid rgba(229,231,235,.9);
-      background:#fff;cursor:pointer;
-      box-shadow: 0 6px 18px rgba(17,24,39,.05);
-      font-weight:600;
+      border:1px solid var(--line); background:#fff; color:var(--text);
+      padding:9px 12px; border-radius:12px; cursor:pointer; font-weight:700; font-size:13px;
     }
-    .btn.primary{
-      border:none;
-      color:#fff;
-      background: linear-gradient(135deg, var(--brand), var(--brand2));
-      box-shadow: 0 12px 26px rgba(37,99,235,.25);
+    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2)); border:0; color:#fff}
+    .btn.ghost{background:transparent}
+    .pill{
+      border:1px solid var(--line); background:#fff; border-radius:999px;
+      padding:8px 10px; display:flex; gap:8px; align-items:center;
+      font-size:12px; color:var(--muted);
     }
-
+    .pill b{color:var(--text); font-size:12px}
     .hero{
-      margin-top:16px;
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap:14px;
-      align-items:stretch;
+      display:flex; justify-content:space-between; align-items:flex-end; gap:14px;
+      padding:16px 0 6px;
     }
-    .panel{
-      background:rgba(255,255,255,.78);
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(229,231,235,.8);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding:16px;
-    }
-    .h1{font-size:26px; font-weight:900; margin:0 0 6px}
-    .sub{color:var(--muted); margin:0 0 14px; line-height:1.4}
-    .searchRow{
-      display:flex;gap:10px;flex-wrap:wrap;
-    }
-    .input{
-      flex:1; min-width:220px;
-      display:flex;align-items:center;gap:10px;
-      border:1px solid rgba(229,231,235,.9);
-      background:#fff;border-radius:14px;
-      padding:10px 12px;
-    }
-    .input input{
-      border:none;outline:none;width:100%;
-      font-size:15px;
-    }
-    .grid2{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap:10px;
-      margin-top:10px;
-    }
-    .select{
-      display:flex;align-items:center;gap:10px;
-      border:1px solid rgba(229,231,235,.9);
-      background:#fff;border-radius:14px;
-      padding:10px 12px;
-    }
-    .select select{
-      border:none;outline:none;background:transparent;font:inherit;width:100%;
-    }
-
-    details.more{
-      margin-top:10px;
-      border:1px dashed rgba(229,231,235,.9);
-      border-radius:14px;
-      padding:10px 12px;
-      background: rgba(255,255,255,.55);
-    }
-    details.more summary{
-      cursor:pointer;
-      color:var(--muted);
-      font-weight:600;
-      user-select:none;
-    }
-
-    .side{
-      display:flex;flex-direction:column;gap:10px;
-    }
-    .hint{
-      display:flex;flex-direction:column;gap:6px;
-      padding:14px;
-      border-radius: var(--radius);
-      border:1px solid rgba(229,231,235,.8);
-      background: linear-gradient(180deg, rgba(255,255,255,.80), rgba(255,255,255,.65));
-      box-shadow: var(--shadow);
-    }
-    .hint b{font-size:14px}
-    .hint span{color:var(--muted);font-size:13px;line-height:1.45}
-
-    .sectionHead{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      margin-top:16px;margin-bottom:10px;
-    }
-    .sectionHead .title{font-size:16px;font-weight:900}
-    .sectionHead .meta{color:var(--muted);font-size:13px}
-
-    .cards{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap:12px;
-    }
+    .hero h2{margin:0; font-size:26px; letter-spacing:.2px}
+    .hero p{margin:6px 0 0; color:var(--muted); font-size:14px}
     .card{
-      background:rgba(255,255,255,.85);
-      border:1px solid rgba(229,231,235,.85);
-      border-radius: 16px;
-      padding:14px;
-      box-shadow: 0 10px 26px rgba(17,24,39,.06);
-      transition: transform .12s ease, box-shadow .12s ease;
-      overflow:hidden;
+      background:var(--card); border:1px solid var(--line);
+      border-radius:var(--radius); box-shadow:var(--shadow);
     }
-    .card:hover{transform: translateY(-2px); box-shadow: 0 16px 34px rgba(17,24,39,.10);}
-    .tagRow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-    .tag{
-      font-size:12px;
-      padding:6px 8px;
-      border-radius:999px;
-      border:1px solid rgba(229,231,235,.9);
-      background:#fff;
-      color:#111827;
+    .filters{padding:14px}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
+    .field{grid-column:span 3}
+    .field.w6{grid-column:span 6}
+    .field.w12{grid-column:span 12}
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+    input,select,textarea{
+      width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--line);
+      background:#fff; outline:none; font-size:14px;
     }
-    .price{font-size:20px;font-weight:900;margin:0 0 6px}
-    .line{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-    .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-    .mini{
-      padding:9px 10px;border-radius:12px;border:1px solid rgba(229,231,235,.9);
-      background:#fff;cursor:pointer;font-weight:700;font-size:13px;
+    textarea{min-height:100px; resize:vertical}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row .btn{height:40px}
+    .hint{font-size:12px; color:var(--muted)}
+    .list{margin-top:12px}
+    .list-head{display:flex; align-items:center; justify-content:space-between; margin:14px 2px 10px}
+    .list-head .hint{margin:0}
+    .cards{
+      display:grid; grid-template-columns:repeat(12,1fr); gap:12px;
     }
-    .mini.primary{
-      border:none;color:#fff;background: linear-gradient(135deg,var(--brand),var(--brand2));
+    .item{grid-column:span 4; padding:14px; position:relative}
+    .item h3{margin:0 0 8px; font-size:16px}
+    .meta{display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:12px}
+    .tag{padding:5px 8px; border-radius:999px; border:1px solid var(--line); background:#fff}
+    .price{font-weight:900; color:#0f172a; font-size:18px; margin-top:10px}
+    .item .tools{display:flex; gap:8px; margin-top:12px}
+    .item .tools .btn{flex:1}
+    .toast{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom:88px; background:#111827; color:#fff; padding:10px 12px;
+      border-radius:12px; font-size:13px; opacity:0; pointer-events:none;
+      transition:.2s; max-width:92vw;
     }
-
-    .empty{
-      background:rgba(255,255,255,.70);
-      border:1px dashed rgba(229,231,235,.9);
-      border-radius:16px;
-      padding:16px;
-      color:var(--muted);
-      text-align:center;
-    }
-
-    .bottomNav{
-      position:fixed;left:0;right:0;bottom:0;
+    .toast.show{opacity:1}
+    .nav{
+      position:fixed; left:0; right:0; bottom:0; z-index:60;
       background:rgba(255,255,255,.86);
-      backdrop-filter: blur(10px);
-      border-top:1px solid rgba(229,231,235,.9);
-      padding:10px 12px;
-      z-index:50;
+      backdrop-filter:saturate(180%) blur(12px);
+      border-top:1px solid var(--line);
     }
-    .bottomNav .inner{
-      max-width:1100px;margin:0 auto;
-      display:flex;justify-content:space-around;gap:10px;
-      font-size:13px;
+    .nav-inner{max-width:980px; margin:0 auto; display:flex; justify-content:space-around; padding:10px 12px}
+    .nav a{
+      width:25%; text-align:center; color:var(--muted);
+      font-size:12px; font-weight:800; padding:6px 0; border-radius:12px;
     }
-    .navItem{
-      display:flex;flex-direction:column;align-items:center;gap:6px;
-      color:var(--muted);
-      min-width:70px;
+    .nav a.active{color:var(--brand)}
+    .nav .ico{display:block; font-size:18px; margin-bottom:4px}
+    .modal-mask{
+      position:fixed; inset:0; background:rgba(0,0,0,.38);
+      display:none; align-items:center; justify-content:center; z-index:100;
+      padding:18px;
     }
-    .navItem.active{color:var(--brand);font-weight:900}
-    .dot{
-      width:6px;height:6px;border-radius:999px;background:transparent;
+    .modal{width:min(560px, 96vw); padding:16px; border-radius:18px; background:#fff; border:1px solid var(--line); box-shadow:var(--shadow)}
+    .modal h3{margin:0 0 8px}
+    .modal .tabs{display:flex; gap:8px; margin:10px 0 12px}
+    .tab{flex:1; text-align:center; padding:9px 10px; border-radius:12px; border:1px solid var(--line); cursor:pointer; font-weight:900; color:var(--muted)}
+    .tab.active{background:linear-gradient(135deg,#eef2ff,#ecfeff); color:var(--text); border-color:#c7d2fe}
+    .modal .actions{justify-content:space-between}
+    @media (max-width:860px){
+      .field{grid-column:span 6}
+      .item{grid-column:span 6}
+      .hero h2{font-size:22px}
     }
-    .navItem.active .dot{background:var(--brand)}
-
-    @media (max-width: 900px){
-      .hero{grid-template-columns:1fr}
-      .cards{grid-template-columns:1fr}
+    @media (max-width:520px){
+      .field{grid-column:span 12}
+      .item{grid-column:span 12}
       .brand{min-width:auto}
     }
   </style>
-</head>
-
-<body>
-  <div class="wrap">
-    <!-- Top Bar -->
-    <div class="topbar">
-      <div class="brand">
-        <!-- 只用一个 Logo：assets/logo.png -->
-        <img src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
-        <div>
-          <div class="t1" id="ui_brand">翱翔安居 · XATU</div>
-          <div class="t2" id="ui_brand_sub">学生租房 · 真实发布 · 审核展示</div>
-        </div>
-      </div>
-
-      <div class="right">
-        <div class="pill">
-          <span id="ui_lang">语言</span>
-          <select id="lang">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-          </select>
-        </div>
-
-        <a class="btn" href="submit.html" id="ui_nav_submit">发布</a>
-        <a class="btn" href="approved.html" id="ui_nav_approved">已通过</a>
-        <a class="btn" href="admin.html" id="ui_nav_admin">后台</a>
-      </div>
-    </div>
-
-    <!-- Hero -->
-    <div class="hero">
-      <div class="panel">
-        <h1 class="h1" id="ui_h1">西安工业大学学生租房平台</h1>
-        <p class="sub" id="ui_sub">输入关键词快速找房；常用筛选保持极简，更多条件可展开。</p>
-
-        <div class="searchRow">
-          <div class="input">
-            <span>🔎</span>
-            <input id="q" placeholder="搜索：校区 / 整租 / 独卫 / 地铁..." />
-          </div>
-          <button class="btn primary" id="btnSearch">搜索</button>
-          <button class="btn" id="btnReset">清空</button>
-        </div>
-
-        <div class="grid2">
-          <div class="select">
-            <span>📍</span>
-            <select id="campus">
-              <option value="" id="ui_opt_all_campus">全部校区</option>
-              <option value="友谊">友谊校区</option>
-              <option value="未央">未央校区</option>
-              <option value="金花">金花校区</option>
-              <option value="其他">其他/附近</option>
-            </select>
-          </div>
-
-          <div class="select">
-            <span>🏠</span>
-            <select id="type">
-              <option value="" id="ui_opt_all_type">全部类型</option>
-              <option value="整租">整租</option>
-              <option value="合租">合租</option>
-              <option value="主卧">主卧</option>
-              <option value="次卧">次卧</option>
-            </select>
-          </div>
-        </div>
-
-        <details class="more">
-          <summary id="ui_more">更多筛选（可选）</summary>
-          <div class="grid2" style="margin-top:10px;">
-            <div class="select">
-              <span>💰</span>
-              <select id="priceRange">
-                <option value="">不限价格</option>
-                <option value="0-800">0 - 800</option>
-                <option value="800-1200">800 - 1200</option>
-                <option value="1200-2000">1200 - 2000</option>
-                <option value="2000-99999">2000+</option>
-              </select>
-            </div>
-            <div class="select">
-              <span>📞</span>
-              <select id="contactType">
-                <option value="">不限联系</option>
-                <option value="微信">微信</option>
-                <option value="电话">电话</option>
-                <option value="WeChat">WeChat</option>
-                <option value="Phone">Phone</option>
-              </select>
-            </div>
-          </div>
-        </details>
-      </div>
-
-      <div class="side">
-        <div class="hint">
-          <b id="ui_hint1_t">提交后会进入审核</b>
-          <span id="ui_hint1_d">发布的房源先进入 Pending，管理员通过后才会在“已通过”展示。</span>
-        </div>
-        <div class="hint">
-          <b id="ui_hint2_t">建议：信息写清楚</b>
-          <span id="ui_hint2_d">标题写“校区+户型+亮点”，描述写清“费用/押金/最短租期/可看房时间”。</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- List -->
-    <div class="sectionHead">
-      <div class="title" id="ui_list_title">最新房源</div>
-      <div class="meta" id="ui_list_meta">自动加载中…</div>
-    </div>
-
-    <div id="list" class="cards"></div>
-    <div id="empty" class="empty" style="display:none;"></div>
-  </div>
-
-  <!-- Bottom Nav -->
-  <div class="bottomNav">
-    <div class="inner">
-      <a class="navItem active" href="index.html"><div class="dot"></div><div id="ui_tab_home">租房</div></a>
-      <a class="navItem" href="submit.html"><div class="dot"></div><div id="ui_tab_submit">发布</div></a>
-      <a class="navItem" href="approved.html"><div class="dot"></div><div id="ui_tab_star">收藏</div></a>
-      <a class="navItem" href="admin.html"><div class="dot"></div><div id="ui_tab_help">客服</div></a>
-    </div>
-  </div>
 
   <script>
-    // ====== CONFIG ======
-    const API_LISTINGS = "/.netlify/functions/listings"; // 如果你函数路径不同，改这里
-
-    // ====== I18N ======
+    // ====== 通用：i18n（中英自由切换）======
     const I18N = {
       zh: {
-        brand: "翱翔安居 · XATU",
-        brandSub: "学生租房 · 真实发布 · 审核展示",
-        lang: "语言",
-        navSubmit: "发布",
-        navApproved: "已通过",
-        navAdmin: "后台",
-        h1: "西安工业大学学生租房平台",
-        sub: "输入关键词快速找房；常用筛选保持极简，更多条件可展开。",
-        qPH: "搜索：校区 / 整租 / 独卫 / 地铁...",
+        appName: "翱翔安居 · XATU",
+        appSub: "西安工业大学学生租房平台",
+        openWeChat: "建议在微信内打开",
+        browseTitle: "租房浏览",
+        browseSub: "筛选房源 · 收藏 · 一键联系",
+        filters: "筛选条件",
+        campus: "校区",
+        type: "整租/合租",
+        bath: "独卫/公卫",
+        metro: "地铁",
+        keyword: "搜索",
+        placeholder: "校区/整租/独卫/地铁/关键词…",
         search: "搜索",
         reset: "清空",
-        allCampus: "全部校区",
-        allType: "全部类型",
-        more: "更多筛选（可选）",
-        listTitle: "最新房源",
-        loading: "自动加载中…",
-        empty: "暂无数据。你可以调整筛选或先去发布一个房源。",
-        hint1t: "提交后会进入审核",
-        hint1d: "发布的房源先进入 Pending，管理员通过后才会在“已通过”展示。",
-        hint2t: "建议：信息写清楚",
-        hint2d: "标题写“校区+户型+亮点”，描述写清“费用/押金/最短租期/可看房时间”。",
-        tabHome: "租房",
-        tabSubmit: "发布",
-        tabStar: "收藏",
-        tabHelp: "客服",
-        view: "查看",
-        contact: "联系"
+        loading: "加载中…",
+        empty: "暂无房源，或筛选条件太严格。",
+        fav: "收藏",
+        unfav: "取消收藏",
+        contact: "联系",
+        login: "登录",
+        logout: "退出",
+        lang: "EN",
+        me: "我的",
+        rent: "租房",
+        submit: "发布",
+        favorites: "收藏",
+        support: "客服",
+        loginTitle: "登录 / 注册",
+        tabLogin: "登录",
+        tabRegister: "注册",
+        email: "邮箱",
+        password: "密码",
+        name: "实名",
+        studentId: "学号",
+        phone: "手机号",
+        needLogin: "请先登录后再操作",
+        okSaved: "已保存",
+        okRemoved: "已取消收藏",
+        errInit: "系统未配置：请检查 assets/config.js",
       },
       en: {
-        brand: "AoXiang Housing · XATU",
-        brandSub: "Student rentals · Post & review · Approved listings",
-        lang: "Language",
-        navSubmit: "Post",
-        navApproved: "Approved",
-        navAdmin: "Admin",
-        h1: "XATU Student Rental Platform",
-        sub: "Search fast with keywords. Keep filters minimal; expand for more options.",
-        qPH: "Search: campus / whole rent / ensuite / metro...",
+        appName: "Aoxiang Housing · XATU",
+        appSub: "Student housing platform for XATU",
+        openWeChat: "Recommended to open in WeChat",
+        browseTitle: "Browse Rentals",
+        browseSub: "Filter listings · Save favorites · Quick contact",
+        filters: "Filters",
+        campus: "Campus",
+        type: "Type",
+        bath: "Bathroom",
+        metro: "Metro",
+        keyword: "Search",
+        placeholder: "Campus / Type / Bathroom / Metro / keywords…",
         search: "Search",
         reset: "Reset",
-        allCampus: "All campuses",
-        allType: "All types",
-        more: "More filters (optional)",
-        listTitle: "Latest listings",
         loading: "Loading…",
-        empty: "No results. Try different filters, or post a new listing first.",
-        hint1t: "Submission goes to review",
-        hint1d: "New posts go to Pending. After admin approval, they appear in Approved.",
-        hint2t: "Tip: write clearly",
-        hint2d: "Title: campus + room type + highlight. Description: price/deposit/min lease/viewing time.",
-        tabHome: "Rent",
-        tabSubmit: "Post",
-        tabStar: "Saved",
-        tabHelp: "Support",
-        view: "View",
-        contact: "Contact"
+        empty: "No listings found. Try relaxing filters.",
+        fav: "Favorite",
+        unfav: "Unfavorite",
+        contact: "Contact",
+        login: "Login",
+        logout: "Logout",
+        lang: "中文",
+        me: "Me",
+        rent: "Rent",
+        submit: "Post",
+        favorites: "Favorites",
+        support: "Support",
+        loginTitle: "Login / Register",
+        tabLogin: "Login",
+        tabRegister: "Register",
+        email: "Email",
+        password: "Password",
+        name: "Full name",
+        studentId: "Student ID",
+        phone: "Phone",
+        needLogin: "Please login first",
+        okSaved: "Saved",
+        okRemoved: "Removed",
+        errInit: "Not configured: check assets/config.js",
       }
     };
 
-    const $ = (id) => document.getElementById(id);
+    // ====== 通用：工具函数 ======
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
 
+    function getLang(){
+      return localStorage.getItem("APP_LANG") || document.documentElement.getAttribute("data-lang") || "zh";
+    }
     function setLang(lang){
-      const t = I18N[lang] || I18N.zh;
-      document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
-      $("ui_brand").textContent = t.brand;
-      $("ui_brand_sub").textContent = t.brandSub;
-      $("ui_lang").textContent = t.lang;
-      $("ui_nav_submit").textContent = t.navSubmit;
-      $("ui_nav_approved").textContent = t.navApproved;
-      $("ui_nav_admin").textContent = t.navAdmin;
-      $("ui_h1").textContent = t.h1;
-      $("ui_sub").textContent = t.sub;
-      $("q").placeholder = t.qPH;
-      $("btnSearch").textContent = t.search;
-      $("btnReset").textContent = t.reset;
-      $("ui_opt_all_campus").textContent = t.allCampus;
-      $("ui_opt_all_type").textContent = t.allType;
-      $("ui_more").textContent = t.more;
-      $("ui_list_title").textContent = t.listTitle;
-      $("ui_list_meta").textContent = t.loading;
-      $("ui_hint1_t").textContent = t.hint1t;
-      $("ui_hint1_d").textContent = t.hint1d;
-      $("ui_hint2_t").textContent = t.hint2t;
-      $("ui_hint2_d").textContent = t.hint2d;
-      $("ui_tab_home").textContent = t.tabHome;
-      $("ui_tab_submit").textContent = t.tabSubmit;
-      $("ui_tab_star").textContent = t.tabStar;
-      $("ui_tab_help").textContent = t.tabHelp;
-
-      localStorage.setItem("lang", lang);
-      // 语言切换后重新渲染按钮文本
-      renderCachedButtonsText(lang);
+      localStorage.setItem("APP_LANG", lang);
+      document.documentElement.setAttribute("data-lang", lang);
+      applyI18n();
+    }
+    function t(key){
+      const lang = getLang();
+      return (I18N[lang] && I18N[lang][key]) || I18N.zh[key] || key;
+    }
+    function showToast(msg){
+      const el = $("#toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=>el.classList.remove("show"), 2200);
     }
 
-    function renderCachedButtonsText(lang){
-      const t = I18N[lang] || I18N.zh;
-      document.querySelectorAll("[data-i18n-view]").forEach(el => el.textContent = t.view);
-      document.querySelectorAll("[data-i18n-contact]").forEach(el => el.textContent = t.contact);
+    // ====== 通用：Supabase 初始化 ======
+    function getSupabase(){
+      if (!window.APP_CONFIG || !APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_ANON_KEY){
+        return null;
+      }
+      if (!window.__sb){
+        window.__sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+      }
+      return window.__sb;
     }
 
-    // ====== DATA ======
-    function buildQuery(){
-      const q = $("q").value.trim();
-      const campus = $("campus").value.trim();
-      const type = $("type").value.trim();
-      const priceRange = $("priceRange").value.trim();
-      const contactType = $("contactType").value.trim();
+    // ====== 通用：UI 文案刷新 ======
+    function applyI18n(){
+      $("#appTitle").textContent = t("appName");
+      $("#appSub").textContent = t("appSub");
+      $("#weChatHint").textContent = t("openWeChat");
+      $("#pageTitle").textContent = t("browseTitle");
+      $("#pageSub").textContent = t("browseSub");
 
-      let min_price = "", max_price = "";
-      if (priceRange && priceRange.includes("-")){
-        const [a,b] = priceRange.split("-");
-        min_price = a; max_price = b;
+      $("#labCampus").textContent = t("campus");
+      $("#labType").textContent = t("type");
+      $("#labBath").textContent = t("bath");
+      $("#labMetro").textContent = t("metro");
+      $("#labKeyword").textContent = t("keyword");
+      $("#kw").placeholder = t("placeholder");
+
+      $("#btnSearch").textContent = t("search");
+      $("#btnReset").textContent = t("reset");
+      $("#loadingText").textContent = t("loading");
+
+      $("#navRentTxt").textContent = t("rent");
+      $("#navSubmitTxt").textContent = t("submit");
+      $("#navFavTxt").textContent = t("favorites");
+      $("#navSupportTxt").textContent = t("support");
+
+      $("#btnLang").textContent = t("lang");
+
+      $("#authTitle").textContent = t("loginTitle");
+      $("#tabLogin").textContent = t("tabLogin");
+      $("#tabRegister").textContent = t("tabRegister");
+      $("#email").placeholder = t("email");
+      $("#password").placeholder = t("password");
+      $("#name").placeholder = t("name");
+      $("#student_id").placeholder = t("studentId");
+      $("#phone").placeholder = t("phone");
+      $("#btnDoLogin").textContent = t("login");
+      $("#btnDoRegister").textContent = t("tabRegister");
+    }
+
+    // ====== 通用：导航高亮 ======
+    function setActiveNav(){
+      const path = location.pathname.split("/").pop() || "index.html";
+      $$("#bottomNav a").forEach(a=>{
+        a.classList.toggle("active", a.getAttribute("data-page") === path);
+      });
+    }
+
+    // ====== 通用：登录弹窗 ======
+    function openAuth(){ $("#authMask").style.display="flex"; }
+    function closeAuth(){ $("#authMask").style.display="none"; }
+    function setAuthTab(mode){
+      $("#tabLogin").classList.toggle("active", mode==="login");
+      $("#tabRegister").classList.toggle("active", mode==="register");
+      $("#loginPane").style.display = (mode==="login") ? "block" : "none";
+      $("#registerPane").style.display = (mode==="register") ? "block" : "none";
+    }
+
+    async function refreshUserUI(){
+      const sb = getSupabase();
+      const userPill = $("#userPill");
+      const btnAuth = $("#btnAuth");
+      const btnLogout = $("#btnLogout");
+
+      if (!sb){
+        userPill.innerHTML = `<span>${t("errInit")}</span>`;
+        btnAuth.style.display="none";
+        btnLogout.style.display="none";
+        return;
       }
 
-      const params = new URLSearchParams();
-      if (q) params.set("q", q);
-      if (campus) params.set("campus", campus);
-      if (type) params.set("type", type);
-      if (contactType) params.set("contact_type", contactType);
-      if (min_price) params.set("min_price", min_price);
-      if (max_price) params.set("max_price", max_price);
-
-      return params.toString();
+      const { data:{ user } } = await sb.auth.getUser();
+      if (user){
+        userPill.innerHTML = `<span>✅</span><b>${user.email || "User"}</b>`;
+        btnAuth.style.display="none";
+        btnLogout.style.display="inline-block";
+      }else{
+        userPill.innerHTML = `<span>👤</span><b>${t("me")}</b><span>${t("login")}</span>`;
+        btnAuth.style.display="inline-block";
+        btnLogout.style.display="none";
+      }
     }
 
-    function formatPrice(n){
-      if (n === null || n === undefined) return "";
-      const num = Number(n);
-      if (Number.isFinite(num)) return "$" + num.toString();
-      return String(n);
+    async function doLogin(){
+      const sb = getSupabase();
+      const email = $("#email").value.trim();
+      const password = $("#password").value.trim();
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error){ showToast(error.message); return; }
+      closeAuth(); await refreshUserUI(); showToast("OK");
     }
 
-    function normalizeItem(x){
-      // 兼容你函数返回字段名不一致的情况
-      return {
-        id: x.id,
-        title: x.title ?? x.name ?? "",
-        price: x.price ?? "",
-        location: x.location ?? x.campus ?? "",
-        contact: x.contact ?? x.phone ?? x.wechat ?? "",
-        description: x.description ?? "",
-      };
+    async function doRegister(){
+      const sb = getSupabase();
+      const email = $("#email").value.trim();
+      const password = $("#password").value.trim();
+      const name = $("#name").value.trim();
+      const student_id = $("#student_id").value.trim();
+      const phone = $("#phone").value.trim();
+
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error){ showToast(error.message); return; }
+
+      // 写入 profiles（你已建触发器也没问题；这里做一次 upsert 兜底）
+      const uid = data?.user?.id;
+      if (uid){
+        await sb.from("profiles").upsert({
+          id: uid,
+          name,
+          student_id,
+          phone,
+          role: "student"
+        });
+      }
+      closeAuth(); await refreshUserUI(); showToast("OK");
     }
 
-    function cardHTML(item, lang){
-      const t = I18N[lang] || I18N.zh;
-      const title = item.title || (lang==="en" ? "Untitled" : "未命名");
-      const loc = item.location || (lang==="en" ? "Location not set" : "未填写位置");
-      const contact = item.contact || (lang==="en" ? "Contact not set" : "未填写联系方式");
+    async function doLogout(){
+      const sb = getSupabase();
+      await sb.auth.signOut();
+      await refreshUserUI();
+      showToast("OK");
+    }
 
-      const tags = [];
-      if (item.location) tags.push(item.location);
-      if (item.description) tags.push((lang==="en" ? "Details" : "详情"));
-      // tags 最多 2 个，避免复杂
-      const tagHTML = tags.slice(0,2).map(s => `<span class="tag">${escapeHTML(s)}</span>`).join("");
+    // ====== 首页：拉取房源 + 收藏 ======
+    async function fetchListings(){
+      const sb = getSupabase();
+      if (!sb){ return; }
 
-      return `
-        <div class="card">
-          <div class="tagRow">${tagHTML}</div>
-          <p class="price">${formatPrice(item.price)}</p>
-          <p class="line"><b>${escapeHTML(title)}</b></p>
-          <p class="line">📍 ${escapeHTML(loc)}</p>
-          <p class="line">📞 ${escapeHTML(contact)}</p>
-          <div class="actions">
-            <button class="mini primary" data-i18n-view onclick="alert('${lang==="en" ? "Open approved page to view details (extend later)." : "详情页可后续扩展：目前先在已通过页查看。"}')">${t.view}</button>
-            <button class="mini" data-i18n-contact onclick="copyText('${escapeJS(item.contact)}')">${t.contact}</button>
+      $("#loadingRow").style.display = "block";
+      $("#cards").innerHTML = "";
+      $("#emptyRow").style.display = "none";
+
+      const campus = $("#campus").value;
+      const type = $("#rtype").value;
+      const bath = $("#bath").value;
+      const metro = $("#metro").value;
+      const kw = $("#kw").value.trim();
+
+      let q = sb.from("listings").select("*").eq("status","approved").order("created_at",{ascending:false}).limit(60);
+
+      if (campus && campus !== "all") q = q.eq("campus", campus);
+      if (type && type !== "all") q = q.eq("rent_type", type);
+      if (bath && bath !== "all") q = q.eq("bath_type", bath);
+      if (metro && metro !== "all") q = q.eq("metro", metro);
+      if (kw) q = q.or(`title.ilike.%${kw}%,location.ilike.%${kw}%,description.ilike.%${kw}%`);
+
+      const { data: listings, error } = await q;
+      $("#loadingRow").style.display = "none";
+
+      if (error){
+        showToast(error.message);
+        return;
+      }
+      if (!listings || listings.length === 0){
+        $("#emptyRow").style.display = "block";
+        return;
+      }
+
+      // 取当前用户收藏
+      const { data:{ user } } = await sb.auth.getUser();
+      let favSet = new Set();
+      if (user){
+        const { data: favs } = await sb.from("favorites").select("listing_id").eq("user_id", user.id);
+        (favs||[]).forEach(x=>favSet.add(x.listing_id));
+      }
+
+      $("#cards").innerHTML = listings.map(x=>{
+        const isFav = favSet.has(x.id);
+        const price = (x.price!=null) ? `$${x.price}` : "";
+        const tags = [
+          x.campus ? `<span class="tag">${x.campus}</span>` : "",
+          x.rent_type ? `<span class="tag">${x.rent_type}</span>` : "",
+          x.bath_type ? `<span class="tag">${x.bath_type}</span>` : "",
+          x.metro ? `<span class="tag">${x.metro}</span>` : "",
+        ].join("");
+        return `
+          <div class="card item" data-id="${x.id}">
+            <h3>${escapeHtml(x.title || "")}</h3>
+            <div class="meta">
+              ${tags}
+              ${x.location ? `<span class="tag">📍 ${escapeHtml(x.location)}</span>`:""}
+            </div>
+            <div class="price">${price}</div>
+            <div class="tools">
+              <button class="btn ${isFav ? "" : "primary"}" data-action="fav">${isFav ? t("unfav") : t("fav")}</button>
+              <button class="btn" data-action="contact">${t("contact")}</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // 绑定事件
+      $$("#cards [data-action='fav']").forEach(btn=>{
+        btn.addEventListener("click", async (e)=>{
+          const card = e.target.closest(".item");
+          const id = card.getAttribute("data-id");
+          await toggleFavorite(id, e.target);
+        });
+      });
+      $$("#cards [data-action='contact']").forEach(btn=>{
+        btn.addEventListener("click", async (e)=>{
+          const card = e.target.closest(".item");
+          const id = card.getAttribute("data-id");
+          await quickContact(id);
+        });
+      });
+    }
+
+    async function toggleFavorite(listingId, btn){
+      const sb = getSupabase();
+      const { data:{ user } } = await sb.auth.getUser();
+      if (!user){ showToast(t("needLogin")); openAuth(); return; }
+
+      const { data: existing } = await sb.from("favorites").select("id").eq("user_id", user.id).eq("listing_id", listingId).maybeSingle();
+      if (existing){
+        const { error } = await sb.from("favorites").delete().eq("id", existing.id);
+        if (error){ showToast(error.message); return; }
+        btn.textContent = t("fav");
+        btn.classList.add("primary");
+        showToast(t("okRemoved"));
+      }else{
+        const { error } = await sb.from("favorites").insert({ user_id:user.id, listing_id:listingId });
+        if (error){ showToast(error.message); return; }
+        btn.textContent = t("unfav");
+        btn.classList.remove("primary");
+        showToast(t("okSaved"));
+      }
+    }
+
+    async function quickContact(listingId){
+      const sb = getSupabase();
+      const { data, error } = await sb.from("listings").select("contact, title").eq("id", listingId).maybeSingle();
+      if (error){ showToast(error.message); return; }
+      const contact = data?.contact || "";
+      if (!contact){ showToast("No contact"); return; }
+      // 简单：复制到剪贴板
+      try{
+        await navigator.clipboard.writeText(contact);
+        showToast("Copied: " + contact);
+      }catch{
+        alert("Contact: " + contact);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s||"").replace(/[&<>"']/g,(c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+
+    // ====== 启动 ======
+    document.addEventListener("DOMContentLoaded", async ()=>{
+      setActiveNav();
+      setLang(getLang());
+      applyI18n();
+
+      $("#btnLang").addEventListener("click", ()=>{
+        setLang(getLang()==="zh" ? "en" : "zh");
+      });
+      $("#btnAuth").addEventListener("click", openAuth);
+      $("#btnLogout").addEventListener("click", doLogout);
+
+      $("#tabLogin").addEventListener("click", ()=>setAuthTab("login"));
+      $("#tabRegister").addEventListener("click", ()=>setAuthTab("register"));
+      $("#authMask").addEventListener("click",(e)=>{ if(e.target.id==="authMask") closeAuth(); });
+      $("#btnCloseAuth").addEventListener("click", closeAuth);
+      $("#btnDoLogin").addEventListener("click", doLogin);
+      $("#btnDoRegister").addEventListener("click", doRegister);
+
+      $("#btnSearch").addEventListener("click", fetchListings);
+      $("#btnReset").addEventListener("click", ()=>{
+        $("#campus").value="all";
+        $("#rtype").value="all";
+        $("#bath").value="all";
+        $("#metro").value="all";
+        $("#kw").value="";
+        fetchListings();
+      });
+
+      const sb = getSupabase();
+      if (!sb){
+        showToast(t("errInit"));
+        return;
+      }
+
+      sb.auth.onAuthStateChange(async ()=>{
+        await refreshUserUI();
+      });
+      await refreshUserUI();
+      await fetchListings();
+    });
+  </script>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo">
+          <!-- 这里会用 assets/logo.png，如果加载失败就隐藏，不影响页面 -->
+          <img src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
+        </div>
+        <div>
+          <h1 id="appTitle">翱翔安居 · XATU</h1>
+          <small id="appSub">西安工业大学学生租房平台</small>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="pill" id="userPill"><span>👤</span><b>我的</b><span>登录</span></div>
+        <button class="btn" id="btnLang">EN</button>
+        <button class="btn primary" id="btnAuth">登录</button>
+        <button class="btn" id="btnLogout" style="display:none">退出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="hint" id="weChatHint">建议在微信内打开</div>
+        <h2 id="pageTitle">租房浏览</h2>
+        <p id="pageSub">筛选房源 · 收藏 · 一键联系</p>
+      </div>
+    </div>
+
+    <div class="card filters">
+      <div class="grid">
+        <div class="field">
+          <label id="labCampus">校区</label>
+          <select id="campus">
+            <option value="all">全部</option>
+            <option value="友谊校区">友谊校区</option>
+            <option value="未央校区">未央校区</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label id="labType">整租/合租</label>
+          <select id="rtype">
+            <option value="all">全部</option>
+            <option value="整租">整租</option>
+            <option value="合租">合租</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label id="labBath">独卫/公卫</label>
+          <select id="bath">
+            <option value="all">全部</option>
+            <option value="独卫">独卫</option>
+            <option value="公卫">公卫</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label id="labMetro">地铁</label>
+          <select id="metro">
+            <option value="all">全部</option>
+            <option value="近地铁">近地铁</option>
+            <option value="不靠近">不靠近</option>
+          </select>
+        </div>
+
+        <div class="field w12">
+          <label id="labKeyword">搜索</label>
+          <input id="kw" placeholder="校区/整租/独卫/地铁/关键词…" />
+        </div>
+
+        <div class="field w12">
+          <div class="row">
+            <button class="btn primary" id="btnSearch">搜索</button>
+            <button class="btn" id="btnReset">清空</button>
+            <span class="hint" id="loadingText" style="display:none">加载中…</span>
           </div>
         </div>
-      `;
-    }
+      </div>
+    </div>
 
-    function escapeHTML(str){
-      return String(str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function escapeJS(str){
-      return String(str ?? "").replaceAll("\\","\\\\").replaceAll("'","\\'");
-    }
-    function copyText(text){
-      if(!text){ alert("空"); return; }
-      navigator.clipboard.writeText(text).then(()=>alert("已复制: " + text)).catch(()=>alert("复制失败"));
-    }
+    <div class="list">
+      <div class="list-head">
+        <div class="hint" id="loadingRow" style="display:none">加载中…</div>
+        <div class="hint" id="emptyRow" style="display:none">暂无房源，或筛选条件太严格。</div>
+      </div>
+      <div class="cards" id="cards"></div>
+    </div>
+  </div>
 
-    async function load(){
-      const lang = $("lang").value;
-      const t = I18N[lang] || I18N.zh;
+  <!-- 登录/注册弹窗 -->
+  <div class="modal-mask" id="authMask">
+    <div class="modal">
+      <div class="row" style="justify-content:space-between; align-items:center">
+        <h3 id="authTitle">登录 / 注册</h3>
+        <button class="btn ghost" id="btnCloseAuth">✕</button>
+      </div>
 
-      $("ui_list_meta").textContent = t.loading;
-      $("empty").style.display = "none";
-      $("list").innerHTML = "";
+      <div class="tabs">
+        <div class="tab active" id="tabLogin">登录</div>
+        <div class="tab" id="tabRegister">注册</div>
+      </div>
 
-      const qs = buildQuery();
-      const url = qs ? `${API_LISTINGS}?${qs}` : API_LISTINGS;
+      <div class="grid" style="margin-top:6px">
+        <div class="field w12">
+          <label>Email</label>
+          <input id="email" placeholder="邮箱" />
+        </div>
+        <div class="field w12">
+          <label>Password</label>
+          <input id="password" type="password" placeholder="密码" />
+        </div>
+      </div>
 
-      try{
-        const res = await fetch(url, { headers: { "Accept": "application/json" }});
-        if(!res.ok){
-          const txt = await res.text();
-          throw new Error("HTTP " + res.status + " " + txt);
-        }
-        const data = await res.json();
+      <div id="loginPane" style="margin-top:10px">
+        <button class="btn primary" id="btnDoLogin" style="width:100%">登录</button>
+      </div>
 
-        const arr = Array.isArray(data) ? data : (data.items || data.data || []);
-        const items = arr.map(normalizeItem);
+      <div id="registerPane" style="display:none; margin-top:10px">
+        <div class="grid">
+          <div class="field w12">
+            <label>Real name</label>
+            <input id="name" placeholder="实名" />
+          </div>
+          <div class="field w12">
+            <label>Student ID</label>
+            <input id="student_id" placeholder="学号" />
+          </div>
+          <div class="field w12">
+            <label>Phone</label>
+            <input id="phone" placeholder="手机号" />
+          </div>
+        </div>
+        <button class="btn primary" id="btnDoRegister" style="width:100%; margin-top:10px">注册</button>
+      </div>
 
-        $("ui_list_meta").textContent = (lang==="en")
-          ? `${items.length} result(s)`
-          : `共 ${items.length} 条`;
+      <div class="hint" style="margin-top:10px">
+        提示：注册后会自动创建 profiles 资料（实名/学号/手机号）。
+      </div>
+    </div>
+  </div>
 
-        if(!items.length){
-          $("empty").textContent = t.empty;
-          $("empty").style.display = "block";
-          return;
-        }
+  <div class="toast" id="toast"></div>
 
-        $("list").innerHTML = items.map(it => cardHTML(it, lang)).join("");
-        renderCachedButtonsText(lang);
-      }catch(e){
-        $("ui_list_meta").textContent = (lang==="en") ? "Load failed" : "加载失败";
-        $("empty").textContent = (lang==="en")
-          ? ("Error: " + e.message)
-          : ("错误：" + e.message);
-        $("empty").style.display = "block";
-      }
-    }
-
-    // ====== EVENTS ======
-    $("btnSearch").addEventListener("click", load);
-    $("btnReset").addEventListener("click", ()=>{
-      $("q").value = "";
-      $("campus").value = "";
-      $("type").value = "";
-      $("priceRange").value = "";
-      $("contactType").value = "";
-      load();
-    });
-    $("lang").addEventListener("change", ()=>{
-      setLang($("lang").value);
-      load();
-    });
-
-    // init
-    (function init(){
-      const saved = localStorage.getItem("lang") || "zh";
-      $("lang").value = saved;
-      setLang(saved);
-      load();
-    })();
-  </script>
+  <!-- 底部导航 -->
+  <div class="nav">
+    <div class="nav-inner" id="bottomNav">
+      <a href="index.html" data-page="index.html" class="active"><span class="ico">🏠</span><span id="navRentTxt">租房</span></a>
+      <a href="submit.html" data-page="submit.html"><span class="ico">➕</span><span id="navSubmitTxt">发布</span></a>
+      <a href="favorites.html" data-page="favorites.html"><span class="ico">⭐</span><span id="navFavTxt">收藏</span></a>
+      <a href="support.html" data-page="support.html"><span class="ico">💬</span><span id="navSupportTxt">客服</span></a>
+    </div>
+  </div>
 </body>
 </html>

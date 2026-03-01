@@ -1,203 +1,244 @@
-const API = {
-  listings: "/.netlify/functions/getApprovedListings",
-  submit: "/.netlify/functions/submitListing",
-  favToggle: "/.netlify/functions/toggleFavorite",
-  favList: "/.netlify/functions/getFavorites",
-  notiList: "/.netlify/functions/getNotifications",
-  notiRead: "/.netlify/functions/markNotificationRead",
-  feedback: "/.netlify/functions/createFeedback",
-};
+// assets/app.js
+(function () {
+  const CFG = window.APP_CONFIG || {};
+  const SUPABASE_URL = CFG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY;
 
-function qs(id){ return document.getElementById(id); }
-
-function getToken() {
-  return localStorage.getItem("sb_token") || "";
-}
-function setToken(token) {
-  localStorage.setItem("sb_token", token || "");
-}
-function authHeader() {
-  const token = getToken();
-  return token ? { "Authorization": `Bearer ${token}` } : {};
-}
-
-async function jsonFetch(url, opts={}) {
-  const res = await fetch(url, {
-    ...opts,
-    headers: {
-      "Content-Type": "application/json",
-      ...(opts.headers||{}),
-      ...authHeader()
-    }
-  });
-  const text = await res.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch(e) { data = { raw: text }; }
-  if (!res.ok) throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
-  return data;
-}
-
-async function loadListings() {
-  const listEl = qs("listingGrid");
-  if (!listEl) return;
-  listEl.innerHTML = `<div class="hint">${I18N_HELPER.t("loading")}</div>`;
-
-  const campus = qs("campus")?.value || "";
-  const q = qs("q")?.value || "";
-  const rentType = qs("rentType")?.value || "";
-  const bathroom = qs("bathroom")?.value || "";
-  const subway = qs("subway")?.value || "";
-
-  const params = new URLSearchParams({ campus, q, rentType, bathroom, subway });
-  const data = await jsonFetch(`${API.listings}?${params.toString()}`);
-
-  if (!data || !data.items || data.items.length === 0) {
-    listEl.innerHTML = `<div class="hint">${I18N_HELPER.t("noData")}</div>`;
-    return;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.warn("Missing APP_CONFIG. Please set assets/config.js");
   }
 
-  listEl.innerHTML = data.items.map(item => `
-    <div class="card">
-      <div class="cardTitle">${escapeHtml(item.title || "")}</div>
-      <div class="cardMeta">
-        <div><b>${I18N_HELPER.t("price")}:</b> ¥${item.price}</div>
-        <div><b>${I18N_HELPER.t("location")}:</b> ${escapeHtml(item.location||"")}</div>
-      </div>
-      <div class="cardActions">
-        <button class="btn" data-fav="${item.id}">☆</button>
-        <a class="btn btnPrimary" href=" ">+</a >
-      </div>
-    </div>
-  `).join("");
+  // ===== Utils =====
+  const qs = (s, el=document) => el.querySelector(s);
+  const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  listEl.querySelectorAll("[data-fav]").forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      try{
-        await jsonFetch(API.favToggle, { method:"POST", body: JSON.stringify({ listing_id: btn.getAttribute("data-fav") }) });
-        toast(I18N_HELPER.t("favAdded"));
-      }catch(e){
-        toast(e.message);
+  // ===== Language (simple) =====
+  const LANG_KEY = "xatu_lang";
+  function getLang() { return localStorage.getItem(LANG_KEY) || "zh"; }
+  function setLang(v){ localStorage.setItem(LANG_KEY, v); location.reload(); }
+  window.XATU_LANG = { getLang, setLang };
+
+  // ===== Minimal Supabase REST client (no external lib needed) =====
+  async function sbFetch(path, { method="GET", body, headers={} } = {}) {
+    const url = SUPABASE_URL.replace(/\/$/, "") + path;
+    const h = {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+      ...headers
+    };
+    const res = await fetch(url, {
+      method,
+      headers: h,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    if (!res.ok) {
+      const msg = typeof data === "string" ? data : (data?.message || res.statusText);
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  // ===== Auth via Supabase Auth REST =====
+  // We use email+password ONLY (no anonymous)
+  const SESSION_KEY = "xatu_session_v1";
+
+  function saveSession(sess){ localStorage.setItem(SESSION_KEY, JSON.stringify(sess)); }
+  function loadSession(){
+    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
+  }
+  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+  // Parse tokens from URL after email verify redirect
+  function readUrlTokens() {
+    const h = location.hash || "";
+    const sp = new URLSearchParams(h.startsWith("#") ? h.slice(1) : h);
+    const qp = new URLSearchParams(location.search);
+
+    // Common cases:
+    // #access_token=...&refresh_token=...&expires_in=...&token_type=bearer&type=signup
+    // or ?code=... (PKCE) ——这里我们做兼容兜底
+    const access_token = sp.get("access_token");
+    const refresh_token = sp.get("refresh_token");
+    const expires_in = sp.get("expires_in");
+    const token_type = sp.get("token_type");
+
+    const code = qp.get("code"); // PKCE style
+    const type = sp.get("type") || qp.get("type");
+
+    return { access_token, refresh_token, expires_in, token_type, code, type };
+  }
+
+  async function setSessionFromUrlIfPresent() {
+    const t = readUrlTokens();
+    if (t.access_token && t.refresh_token) {
+      // Save tokens as session
+      const expiresAt = Date.now() + (Number(t.expires_in || 3600) * 1000);
+      saveSession({
+        access_token: t.access_token,
+        refresh_token: t.refresh_token,
+        token_type: t.token_type || "bearer",
+        expires_at: expiresAt
+      });
+      // Clean URL (avoid repeated parsing)
+      history.replaceState({}, document.title, location.pathname);
+      return true;
+    }
+
+    // If PKCE code exists, we can try exchangeCodeForSession endpoint
+    if (t.code) {
+      // Supabase has /auth/v1/token?grant_type=pkce
+      // But needs code_verifier which is stored by supabase-js normally.
+      // Since we are not using supabase-js here, we cannot exchange PKCE safely.
+      // ✅ 兜底：如果你后台邮件模板用的是 “token hash verify” + redirect，这里一般是 hash token，不会走 pkce。
+      // 所以我们提示用户升级模板或用 hash token 模式。
+      console.warn("PKCE code found. This setup expects hash tokens. Please use default email verify redirect.");
+    }
+    return false;
+  }
+
+  async function authSignUp(email, password, profile = {}) {
+    // /auth/v1/signup
+    // redirect_to must be allowed in Supabase Redirect URLs
+    const redirect_to = location.origin; // back to site root
+    const data = await sbFetch(`/auth/v1/signup`, {
+      method: "POST",
+      headers: { "X-Client-Info": "xatu-static" },
+      body: {
+        email,
+        password,
+        data: profile,
+        options: { emailRedirectTo: redirect_to }
       }
     });
-  });
-}
+    return data;
+  }
 
-async function submitListing(ev) {
-  ev.preventDefault();
-  const statusEl = qs("status");
-  if (statusEl) statusEl.textContent = "";
+  async function authSignIn(email, password) {
+    // /auth/v1/token?grant_type=password
+    const data = await sbFetch(`/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      body: { email, password }
+    });
+    // data: {access_token, refresh_token, expires_in, token_type, user}
+    const expiresAt = Date.now() + (Number(data.expires_in || 3600) * 1000);
+    saveSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      token_type: data.token_type || "bearer",
+      expires_at: expiresAt,
+      user: data.user
+    });
+    return data;
+  }
 
-  const payload = {
-    title: qs("title").value.trim(),
-    price: Number(qs("price").value),
-    location: qs("location").value.trim(),
-    contact: qs("contact").value.trim(),
-    description: (qs("description")?.value || "").trim(),
-    campus: qs("campus")?.value || null,
-    rent_type: qs("rentType")?.value || null,
-    bathroom: qs("bathroom")?.value || null,
-    subway: qs("subway")?.value || null
+  async function authGetUser() {
+    const sess = loadSession();
+    if (!sess?.access_token) return null;
+    try{
+      const user = await sbFetch(`/auth/v1/user`, {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${sess.access_token}` }
+      });
+      return user;
+    }catch(e){
+      console.warn("authGetUser failed:", e.message);
+      return null;
+    }
+  }
+
+  async function authSignOut() {
+    const sess = loadSession();
+    try{
+      if (sess?.access_token) {
+        await sbFetch(`/auth/v1/logout`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${sess.access_token}` },
+          body: {}
+        });
+      }
+    }catch(e){
+      // ignore
+    }
+    clearSession();
+  }
+
+  // ===== Favorites =====
+  const FAV_KEY = "xatu_favorites_v1";
+  function loadFavs(){
+    try { return JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch { return []; }
+  }
+  function saveFavs(list){ localStorage.setItem(FAV_KEY, JSON.stringify(list)); }
+  function isFav(id){ return loadFavs().includes(id); }
+  function toggleFav(id){
+    const list = loadFavs();
+    const idx = list.indexOf(id);
+    if (idx >= 0) list.splice(idx, 1); else list.unshift(id);
+    saveFavs(list);
+    return list;
+  }
+
+  // ===== Listings (table: listings) =====
+  async function fetchListings({ limit=50, keyword="", campus="全部", rentType="全部", bathType="全部", subway="全部" } = {}) {
+    // Basic filter with ilike
+    // Requires your table "listings" and RLS allowing anon select (or public policy)
+    let url = `/rest/v1/listings?select=*&order=created_at.desc&limit=${encodeURIComponent(limit)}`;
+
+    // keyword search across title/location/desc
+    const filters = [];
+    if (keyword.trim()) {
+      const k = keyword.trim().replace(/[%_]/g, "\\$&");
+      // or=(title.ilike.*k*,location.ilike.*k*,desc.ilike.*k*)
+      filters.push(`or=(title.ilike.*${k}*,location.ilike.*${k}*,description.ilike.*${k}*)`);
+    }
+    if (campus !== "全部") filters.push(`campus=eq.${encodeURIComponent(campus)}`);
+    if (rentType !== "全部") filters.push(`rent_type=eq.${encodeURIComponent(rentType)}`);
+    if (bathType !== "全部") filters.push(`bath_type=eq.${encodeURIComponent(bathType)}`);
+    if (subway !== "全部") filters.push(`subway=eq.${encodeURIComponent(subway)}`);
+
+    if (filters.length) url += `&${filters.join("&")}`;
+    return await sbFetch(url);
+  }
+
+  async function createListing(payload) {
+    // Requires insert policy
+    return await sbFetch(`/rest/v1/listings`, {
+      method:"POST",
+      headers:{ "Prefer":"return=representation" },
+      body: payload
+    });
+  }
+
+  async function createSupportTicket(payload) {
+    // Table: reports (or support)
+    // I use "reports" as you screenshot earlier mentioned.
+    return await sbFetch(`/rest/v1/reports`, {
+      method:"POST",
+      headers:{ "Prefer":"return=representation" },
+      body: payload
+    });
+  }
+
+  // ===== UI helpers =====
+  function setNotice(el, msg, type="notice"){
+    if (!el) return;
+    el.className = `notice ${type==="ok"?"ok":type==="err"?"err":""}`;
+    el.textContent = msg;
+    el.style.display = msg ? "block" : "none";
+  }
+
+  // ===== Global init =====
+  window.XATU = {
+    sbFetch,
+    auth: { signUp: authSignUp, signIn: authSignIn, signOut: authSignOut, getUser: authGetUser, setSessionFromUrlIfPresent },
+    listings: { fetch: fetchListings, create: createListing },
+    support: { create: createSupportTicket },
+    favs: { load: loadFavs, save: saveFavs, isFav, toggleFav },
+    ui: { setNotice }
   };
 
-  try{
-    await jsonFetch(API.submit, { method:"POST", body: JSON.stringify(payload) });
-    if (statusEl) statusEl.innerHTML = `✅ ${I18N_HELPER.t("submitOk")}`;
-    ev.target.reset();
-  }catch(e){
-    if (statusEl) statusEl.innerHTML = `❌ ${I18N_HELPER.t("submitFail")}${escapeHtml(e.message)}`;
-  }
-}
-
-async function loadFavorites() {
-  const el = qs("favList");
-  if (!el) return;
-  el.innerHTML = `<div class="hint">${I18N_HELPER.t("loading")}</div>`;
-  try{
-    const data = await jsonFetch(API.favList);
-    const items = data.items || [];
-    if (!items.length) { el.innerHTML = `<div class="hint">${I18N_HELPER.t("noData")}</div>`; return; }
-    el.innerHTML = items.map(x=>`
-      <div class="card">
-        <div class="cardTitle">${escapeHtml(x.title||"")}</div>
-        <div class="cardMeta">
-          <div><b>${I18N_HELPER.t("price")}:</b> ¥${x.price}</div>
-          <div><b>${I18N_HELPER.t("location")}:</b> ${escapeHtml(x.location||"")}</div>
-        </div>
-        <div class="cardActions">
-          <button class="btn" data-unfav="${x.id}">★</button>
-        </div>
-      </div>
-    `).join("");
-    el.querySelectorAll("[data-unfav]").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        try{
-          await jsonFetch(API.favToggle, { method:"POST", body: JSON.stringify({ listing_id: btn.getAttribute("data-unfav") }) });
-          toast(I18N_HELPER.t("favRemoved"));
-          loadFavorites();
-        }catch(e){ toast(e.message); }
-      });
-    });
-  }catch(e){
-    el.innerHTML = `<div class="hint">❌ ${escapeHtml(e.message)}</div>`;
-  }
-}
-
-async function loadMessages() {
-  const el = qs("msgList");
-  if (!el) return;
-  el.innerHTML = `<div class="hint">${I18N_HELPER.t("loading")}</div>`;
-  try{
-    const data = await jsonFetch(API.notiList);
-    const items = data.items || [];
-    if (!items.length) { el.innerHTML = `<div class="hint">${I18N_HELPER.t("noData")}</div>`; return; }
-    el.innerHTML = items.map(n=>`
-      <div class="card">
-        <div class="cardTitle">${escapeHtml(n.title||"")}</div>
-        <div class="cardMeta">${escapeHtml(n.body||"")}</div>
-        <div class="cardActions">
-          <button class="btn" data-read="${n.id}">${n.read ? "✓" : "Mark read"}</button>
-        </div>
-      </div>
-    `).join("");
-    el.querySelectorAll("[data-read]").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        try{
-          await jsonFetch(API.notiRead, { method:"POST", body: JSON.stringify({ id: btn.getAttribute("data-read") }) });
-          loadMessages();
-        }catch(e){ toast(e.message); }
-      });
-    });
-  }catch(e){
-    el.innerHTML = `<div class="hint">❌ ${escapeHtml(e.message)}</div>`;
-  }
-}
-
-async function sendFeedback(ev) {
-  ev.preventDefault();
-  const statusEl = qs("fbStatus");
-  if (statusEl) statusEl.textContent = "";
-  try{
-    await jsonFetch(API.feedback, { method:"POST", body: JSON.stringify({
-      category: qs("fbCategory").value,
-      content: qs("fbContent").value.trim()
-    })});
-    if (statusEl) statusEl.textContent = `✅ ${I18N_HELPER.t("feedbackOk")}`;
-    ev.target.reset();
-  }catch(e){
-    if (statusEl) statusEl.textContent = `❌ ${e.message}`;
-  }
-}
-
-function toast(msg){
-  const el = document.createElement("div");
-  el.className="toast";
-  el.textContent=msg;
-  document.body.appendChild(el);
-  setTimeout(()=>el.remove(), 1800);
-}
-
-function escapeHtml(s){
-  return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-window.APP = { loadListings, submitListing, loadFavorites, loadMessages, sendFeedback, setToken };
+})();

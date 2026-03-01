@@ -1,128 +1,129 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>收藏 - 翻翔安居 · XATU</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>收藏 · 翱翔安居 XATU</title>
 
   <script src="/assets/config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--primary:#2563eb;--border:#e5e7eb;--shadow:0 10px 30px rgba(0,0,0,.06);--r:16px}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial}
-    .top{position:sticky;top:0;z-index:50;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-    .topin{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
-    .btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:13px;cursor:pointer}
-    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-    .container{max-width:1100px;margin:0 auto;padding:18px 16px 96px}
-    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
-    .title{margin:10px 0 6px;font-size:22px}
-    .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
-    .list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
-    .card-title{font-weight:800}
-    .price{font-weight:900;font-size:18px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto}
-    .hint{font-size:12px;color:var(--muted)}
-    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);display:flex;justify-content:center;z-index:60}
-    .navin{width:min(1100px,100%);display:flex;justify-content:space-around;padding:10px}
-    .nav a{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:8px 12px;border-radius:12px;text-decoration:none}
-    .nav a.active{color:var(--primary);background:rgba(37,99,235,.08);font-weight:700}
-    @media(max-width:860px){.list{grid-template-columns:1fr}}
-  </style>
+  <link rel="stylesheet" href="/assets/app.css" />
+  <script defer src="/assets/app.js"></script>
 </head>
 <body>
-  <div class="top">
-    <div class="topin">
-      <button class="btn" onclick="history.back()">← 返回</button>
-      <div style="font-weight:800">收藏</div>
-      <div style="color:var(--muted);font-size:12px">这里显示你收藏的房源</div>
-      <div style="flex:1"></div>
-      <button class="btn primary" onclick="ensureLogin(true)">登录</button>
+  <div class="container pad-bottom">
+    <div class="shell">
+      <div class="topbar">
+        <a class="backbtn" href=" " aria-label="back">← 返回</a >
+
+        <div class="brand">
+          < img src="/assets/logo.png" alt="logo" />
+          <div>
+            <div class="title">翱翔安居 · XATU</div>
+            <div class="sub">收藏 / Favorites</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="pill" href="/support.html">💬 <small>客服</small></a >
+          <a class="pill" href="/submit.html">＋ <small>发布</small></a >
+        </div>
+      </div>
+
+      <div class="header">
+        <div class="h1">收藏</div>
+        <div class="h2">这里显示你收藏的房源</div>
+      </div>
+
+      <div class="card filters">
+        <div class="row">
+          <button class="btn" id="btnClearFav">清空收藏</button>
+          <div class="spacer"></div>
+          <div class="badge" id="favCount">0</div>
+        </div>
+      </div>
+
+      <div class="listings" id="listings"></div>
     </div>
   </div>
 
-  <div class="container">
-    <div class="panel">
-      <div class="title">收藏</div>
-      <div class="sub">只有登录用户才能看到自己的收藏</div>
-
-      <div id="hint" class="hint"></div>
-      <div id="list" class="list" style="margin-top:12px"></div>
-    </div>
-  </div>
-
-  <div class="nav">
-    <div class="navin">
-      <a href="/"><span>🏠</span><span>租房</span></a>
-      <a href="/submit"><span>➕</span><span>发布</span></a>
-      <a class="active" href="/favorites"><span>⭐</span><span>收藏</span></a>
-      <a href="/support"><span>🛟</span><span>客服</span></a>
+  <div class="tabs">
+    <div class="inner">
+      <a class="tab" href="/"><div class="dot">🏠</div><div>租房</div></a >
+      <a class="tab" href="/submit.html"><div class="dot">＋</div><div>发布</div></a >
+      <a class="tab active" href="/favorites.html"><div class="dot">⭐</div><div>收藏</div></a >
+      <a class="tab" href="/support.html"><div class="dot">💬</div><div>客服</div></a >
     </div>
   </div>
 
   <script>
-    window.sb = window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
+    (async function(){
+      const { XATU } = window;
+      await XATU.auth.setSessionFromUrlIfPresent();
 
-    async function ensureLogin(onlyOpen){
-      const { data } = await window.sb.auth.getUser();
-      if(data?.user) return data.user;
-      if(onlyOpen) { alert("请先在任意页面登录"); return null; }
-      throw new Error("未登录");
-    }
+      const listingsEl = document.getElementById("listings");
+      const favCount = document.getElementById("favCount");
 
-    function esc(s){ return String(s||"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+      function render(items){
+        const favs = XATU.favs.load();
+        favCount.textContent = `收藏数：${favs.length}`;
+        if(!favs.length){
+          listingsEl.innerHTML = `<div class="notice">你还没有收藏任何房源。去首页点 “收藏” 吧。</div>`;
+          return;
+        }
 
-    async function loadFavorites(){
-      const hint=document.getElementById("hint");
-      const list=document.getElementById("list");
-      list.innerHTML="";
-      hint.textContent="加载中…";
+        const map = new Map(items.map(x => [String(x.id ?? x.uuid ?? x.created_at), x]));
+        const list = favs.map(id => map.get(String(id))).filter(Boolean);
 
-      const user = await ensureLogin(true);
-      if(!user){ hint.textContent="未登录：请先登录后查看收藏"; return; }
+        listingsEl.innerHTML = list.map(item => {
+          const id = item.id ?? item.uuid ?? item.created_at;
+          return `
+            <div class="card item" data-id="${String(id)}">
+              <div class="name">${item.title || "未命名房源"}</div>
+              <div class="meta">
+                <div>${item.campus || "—"}</div>
+                <div>${item.location || "—"}</div>
+              </div>
+              <div class="price">¥ ${item.price ?? "—"}</div>
+              <div class="btns">
+                <button class="btn" data-act="unfav">取消收藏</button>
+                <button class="btn primary" data-act="contact">☎ 联系</button>
+                <span class="badge">${item.rent_type || "—"} · ${item.bath_type || "—"}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
 
-      // favorites join listings
-      const { data, error } = await window.sb
-        .from("favorites")
-        .select("id, created_at, listing_id, listings(*)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending:false });
+      async function load(){
+        // 拉一遍最新 listings，再按收藏 id 过滤（简单可靠）
+        const data = await XATU.listings.fetch({ limit: 200 });
+        render(data || []);
+      }
 
-      if(error){ hint.textContent="读取收藏失败：" + error.message; return; }
+      listingsEl.addEventListener("click", async (e)=>{
+        const btn = e.target.closest("button");
+        if(!btn) return;
+        const itemEl = e.target.closest(".item");
+        const id = itemEl?.dataset?.id;
+        const act = btn.dataset.act;
+        if(!id) return;
 
-      hint.textContent = data?.length ? `共 ${data.length} 条收藏` : "暂无收藏";
-      (data||[]).forEach(row=>{
-        const x=row.listings || {};
-        const div=document.createElement("div");
-        div.className="card";
-        div.innerHTML=`
-          <div class="card-title">${esc(x.title||"未命名房源")}</div>
-          <div class="hint">${esc(x.campus||"")} · ${esc(x.rent_type||"")} · ${esc(x.toilet_type||"")} · ${esc(x.metro||"")}</div>
-          <div class="price">¥ ${esc(String(x.price ?? ""))}</div>
-          <div class="row">
-            <button class="btn" onclick="removeFav('${row.id}')">取消收藏</button>
-            <button class="btn primary" onclick="showContact('${esc((x.contact||"").replace(/'/g,"\\'"))}')">联系</button>
-          </div>
-        `;
-        list.appendChild(div);
+        if(act === "unfav"){
+          XATU.favs.toggleFav(String(id));
+          load();
+        }
+        if(act === "contact"){
+          alert("联系功能：请在 listings 表中为该房源填写 contact 字段（如 微信/手机号）。");
+        }
       });
-    }
 
-    function showContact(c){
-      if(!c) return alert("该房源未填写联系方式");
-      alert("联系方式：\n" + c);
-    }
+      document.getElementById("btnClearFav").onclick = () => {
+        XATU.favs.save([]);
+        load();
+      };
 
-    async function removeFav(favId){
-      const { error } = await window.sb.from("favorites").delete().eq("id", favId);
-      if(error) return alert("取消失败：" + error.message);
-      await loadFavorites();
-    }
-
-    loadFavorites();
+      load();
+    })();
   </script>
 </body>
 </html>

@@ -2,185 +2,194 @@
 <html lang="zh-CN" data-lang="zh">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>客服 · 翱翔安居</title>
-  <meta name="theme-color" content="#f7f7fb" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>客服与反馈 · 翱翔安居</title>
 
-  <!-- ✅ 每个页面都要加的脚本（放在 <head> 里） -->
-  <script defer src="assets/config.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{--bg:#f7f7fb;--card:#fff;--text:#121826;--muted:#6b7280;--line:#e5e7eb;--brand:#2563eb;--brand2:#0ea5e9;--shadow:0 10px 30px rgba(17,24,39,.08);--radius:18px;}
-    *{box-sizing:border-box} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text)}
-    .topbar{position:sticky;top:0;z-index:50;background:rgba(247,247,251,.78);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line)}
-    .topbar-inner{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:34px;height:34px;border-radius:10px;overflow:hidden;background:#fff;border:1px solid var(--line);display:grid;place-items:center}
-    .logo img{width:100%;height:100%;object-fit:cover}
-    .brand h1{margin:0;font-size:15px;font-weight:900}
-    .brand small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
-    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .btn{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}
-    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));border:0;color:#fff}
-    .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
-    .pill b{color:var(--text)}
-    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 90px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-top:12px}
-    .hero h2{margin:0;font-size:24px} .hero p{margin:6px 0 0;color:var(--muted);font-size:14px}
-    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-    input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:14px;outline:none}
-    textarea{min-height:120px;resize:vertical}
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;margin-top:10px}
-    .field{grid-column:span 6} .field.w12{grid-column:span 12}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    :root{--bg:#f6f8fb;--card:#ffffffcc;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--shadow:0 10px 30px rgba(17,24,39,.08);--radius:16px;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft Yahei",sans-serif;background:radial-gradient(1200px 600px at 15% 0%, #eaf2ff 0%, transparent 55%),radial-gradient(900px 500px at 85% 10%, #e9fff2 0%, transparent 50%),var(--bg);color:var(--text);padding-bottom:74px;}
+    .topbar{position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:linear-gradient(to bottom, rgba(246,248,251,.92), rgba(246,248,251,.72));border-bottom:1px solid var(--line);}
+    .topbar .inner{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+    .back{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;}
+    .brand{display:flex;align-items:center;gap:10px;}
+    .logo{width:34px;height:34px;border-radius:10px;object-fit:cover;background:#fff;border:1px solid var(--line);}
+    .t1{font-weight:900;font-size:14px;line-height:1.1}
+    .t2{font-size:12px;color:var(--muted)}
+    .spacer{flex:1}
+    .btn{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:12px;font-size:13px;cursor:pointer;}
+    .btn.primary{background:var(--primary);color:#fff;border-color:transparent;}
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 24px;}
+    .card{background:var(--card);border:1px solid rgba(229,231,235,.85);border-radius:var(--radius);box-shadow:var(--shadow);}
+    .hd{padding:16px 16px 10px;}
+    .h1{font-size:22px;font-weight:900;margin:0;}
+    .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .form{padding:14px 16px 16px;}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media(max-width:720px){.row{grid-template-columns:1fr;}}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;}
+    input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;font-size:14px;}
+    textarea{min-height:120px;resize:vertical;}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:12px;}
     .hint{font-size:12px;color:var(--muted)}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;max-width:92vw}
-    .toast.show{opacity:1}
-    .nav{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);border-top:1px solid var(--line)}
-    .nav-inner{max-width:980px;margin:0 auto;display:flex;justify-content:space-around;padding:10px 12px}
-    .nav a{width:25%;text-align:center;color:var(--muted);font-size:12px;font-weight:900;padding:6px 0;border-radius:12px}
-    .nav a.active{color:var(--brand)}
-    .nav .ico{display:block;font-size:18px;margin-bottom:4px}
-    @media (max-width:520px){.field{grid-column:span 12}}
+    .tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 12px;z-index:20;}
+    .tabs{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+    .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 6px;border-radius:14px;border:1px solid transparent;color:var(--muted);font-size:12px;text-decoration:none;}
+    .tab.active{background:#eef2ff;border-color:#dbeafe;color:#1d4ed8;font-weight:900;}
+    .tab .ic{font-size:16px;line-height:1;}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:50;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;display:none;box-shadow:0 10px 24px rgba(0,0,0,.2);}
   </style>
 
   <script>
-    const I18N={zh:{appName:"翱翔安居 · XATU",appSub:"客服 / 反馈",title:"客服与反馈",sub:"提交问题/建议，我们会处理",needLogin:"未登录也可提交（建议登录便于追踪）",ok:"已提交，我们会尽快处理",lang:"EN",login:"登录",logout:"退出",rent:"租房",submit:"发布",favorites:"收藏",support:"客服"},
-               en:{appName:"Aoxiang Housing · XATU",appSub:"Support / Feedback",title:"Support & Feedback",sub:"Submit issues or suggestions",needLogin:"You can submit without login (login recommended)",ok:"Submitted. We'll review soon.",lang:"中文",login:"Login",logout:"Logout",rent:"Rent",submit:"Post",favorites:"Favorites",support:"Support"}};
-    const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-    function getLang(){return localStorage.getItem("APP_LANG")||"zh"} function setLang(l){localStorage.setItem("APP_LANG",l);document.documentElement.setAttribute("data-lang",l);applyI18n()}
-    function t(k){return (I18N[getLang()]&&I18N[getLang()][k])||I18N.zh[k]||k}
-    function showToast(m){const el=$("#toast");el.textContent=m;el.classList.add("show");clearTimeout(window.__tt);window.__tt=setTimeout(()=>el.classList.remove("show"),2200)}
-    function getSupabase(){ if(!window.APP_CONFIG||!APP_CONFIG.SUPABASE_URL||!APP_CONFIG.SUPABASE_ANON_KEY) return null; if(!window.__sb) window.__sb=supabase.createClient(APP_CONFIG.SUPABASE_URL,APP_CONFIG.SUPABASE_ANON_KEY); return window.__sb; }
-    function applyI18n(){
-      $("#appTitle").textContent=t("appName"); $("#appSub").textContent=t("appSub");
-      $("#pageTitle").textContent=t("title"); $("#pageSub").textContent=t("sub");
-      $("#tip").textContent=t("needLogin");
-      $("#btnLang").textContent=t("lang");
-      $("#btnAuth").textContent=t("login"); $("#btnLogout").textContent=t("logout");
-      $("#navRentTxt").textContent=t("rent"); $("#navSubmitTxt").textContent=t("submit"); $("#navFavTxt").textContent=t("favorites"); $("#navSupportTxt").textContent=t("support");
-    }
-    function setActiveNav(){ const path=location.pathname.split("/").pop()||"support.html"; $$("#bottomNav a").forEach(a=>a.classList.toggle("active",a.getAttribute("data-page")===path)); }
+    const I18N={
+      zh:{appName:"翱翔安居 · XATU",appDesc:"客服 / 反馈",title:"客服与反馈",sub:"提交问题/建议，我们会处理",cat:"分类",contact:"联系方式（可选）",title2:"标题",content:"内容",submit:"提交",login:"登录",en:"EN"},
+      en:{appName:"AoXiang Housing · XATU",appDesc:"Support / Feedback",title:"Support & Feedback",sub:"Send issues/suggestions",cat:"Category",contact:"Contact (optional)",title2:"Title",content:"Content",submit:"Submit",login:"Login",en:"ZH"}
+    };
+    function getLang(){return localStorage.getItem("lang")||"zh";}
+    function setLang(l){localStorage.setItem("lang",l);document.documentElement.dataset.lang=l;applyI18n();}
+    function t(k){return (I18N[getLang()]&&I18N[getLang()][k])||I18N.zh[k]||k;}
+    function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.style.display="block";clearTimeout(window.__t);window.__t=setTimeout(()=>el.style.display="none",2200);}
+    function goBack(){ if(history.length>1) history.back(); else location.href="/"; }
 
-    async function refreshUserUI(){
-      const sb=getSupabase(); if(!sb){showToast("Not configured"); $("#btnAuth").style.display="none"; $("#btnLogout").style.display="none"; return null;}
-      const {data:{user}}=await sb.auth.getUser();
-      if(user){ $("#userPill").innerHTML=`<span>✅</span><b>${user.email||"User"}</b>`; $("#btnAuth").style.display="none"; $("#btnLogout").style.display="inline-block"; }
-      else{ $("#userPill").innerHTML=`<span>👤</span><b>${t("login")}</b>`; $("#btnAuth").style.display="inline-block"; $("#btnLogout").style.display="none"; }
-      return user;
+    function getSupabase(){
+      const cfg=window.APP_CONFIG||{};
+      if(!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY) return null;
+      return window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+    }
+    function applyI18n(){
+      document.getElementById("appName").textContent=t("appName");
+      document.getElementById("appDesc").textContent=t("appDesc");
+      document.getElementById("pageTitle").textContent=t("title");
+      document.getElementById("pageSub").textContent=t("sub");
+      document.getElementById("labCat").textContent=t("cat");
+      document.getElementById("labContact").textContent=t("contact");
+      document.getElementById("labTitle").textContent=t("title2");
+      document.getElementById("labContent").textContent=t("content");
+      document.getElementById("btnSubmit").textContent=t("submit");
+      document.getElementById("btnLang").textContent=t("en");
+      document.getElementById("btnLogin").textContent=t("login");
     }
 
     async function submitReport(){
       const sb=getSupabase();
-      if(!sb){ showToast("Not configured"); return; }
+      if(!sb){ toast("未配置 Supabase（assets/config.js）"); return; }
 
-      const {data:{user}}=await sb.auth.getUser();
-      const payload={
-        user_id: user?.id || null,
-        category: $("#category").value,
-        title: $("#title").value.trim(),
-        content: $("#content").value.trim(),
-        contact: $("#contact").value.trim()
+      const { data: sessionData } = await sb.auth.getSession();
+      const uid = sessionData?.session?.user?.id || null;
+
+      const payload = {
+        category: document.getElementById("f_cat").value,
+        contact: document.getElementById("f_contact").value.trim(),
+        title: document.getElementById("f_title").value.trim(),
+        content: document.getElementById("f_content").value.trim(),
+        user_id: uid
       };
+
       if(!payload.title || !payload.content){
-        showToast("请填写标题与内容");
+        toast("请填写：标题 + 内容");
         return;
       }
+
       const { error } = await sb.from("reports").insert(payload);
-      if(error){ showToast(error.message); return; }
-      showToast(t("ok"));
-      $("#title").value=""; $("#content").value=""; $("#contact").value="";
+      if(error){ toast("提交失败：" + error.message); return; }
+
+      toast("提交成功，我们会处理");
+      document.getElementById("f_title").value="";
+      document.getElementById("f_content").value="";
     }
 
-    document.addEventListener("DOMContentLoaded", async ()=>{
-      setActiveNav();
-      setLang(getLang());
+    function bindCommon(){
+      document.getElementById("btnBack").onclick=goBack;
+      document.getElementById("btnLang").onclick=()=>setLang(getLang()==="zh"?"en":"zh");
+      document.getElementById("btnLogin").onclick=()=>toast("登录入口已保留（下一步接 Supabase Auth）");
+
+      document.getElementById("tabHome").onclick=()=>location.href="/";
+      document.getElementById("tabSubmit").onclick=()=>location.href="/submit";
+      document.getElementById("tabFav").onclick=()=>location.href="/favorites";
+      document.getElementById("tabSupport").onclick=()=>location.href="/support";
+
+      document.getElementById("btnSubmit").onclick=submitReport;
+    }
+
+    window.addEventListener("DOMContentLoaded", ()=>{
+      document.documentElement.dataset.lang=getLang();
       applyI18n();
-
-      $("#btnLang").addEventListener("click", ()=>setLang(getLang()==="zh"?"en":"zh"));
-      $("#btnAuth").addEventListener("click", ()=>location.href="index.html#login");
-      $("#btnLogout").addEventListener("click", async ()=>{const sb=getSupabase(); await sb.auth.signOut(); showToast("OK"); await refreshUserUI();});
-      $("#btnSubmit").addEventListener("click", submitReport);
-
-      const sb=getSupabase();
-      if(!sb){ showToast("Not configured"); return; }
-      sb.auth.onAuthStateChange(async ()=>refreshUserUI());
-      await refreshUserUI();
+      bindCommon();
+      document.querySelector('[data-tab="support"]').classList.add("active");
     });
   </script>
 </head>
 
 <body>
   <div class="topbar">
-    <div class="topbar-inner">
+    <div class="inner">
+      <button class="back" id="btnBack" title="Back">←</button>
       <div class="brand">
-        <div class="logo"><img src="assets/logo.png" alt="logo" onerror="this.style.display='none'"></div>
+        <img class="logo" src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
         <div>
-          <h1 id="appTitle">翱翔安居 · XATU</h1>
-          <small id="appSub">客服 / 反馈</small>
+          <div class="t1" id="appName">翱翔安居 · XATU</div>
+          <div class="t2" id="appDesc">客服 / 反馈</div>
         </div>
       </div>
-      <div class="actions">
-        <div class="pill" id="userPill"><span>👤</span><b>登录</b></div>
-        <button class="btn" id="btnLang">EN</button>
-        <button class="btn primary" id="btnAuth">登录</button>
-        <button class="btn" id="btnLogout" style="display:none">退出</button>
-      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="btnLang">EN</button>
+      <button class="btn primary" id="btnLogin">登录</button>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="hero">
-      <h2 id="pageTitle">客服与反馈</h2>
-      <p id="pageSub">提交问题/建议，我们会处理</p>
-    </div>
-
     <div class="card">
-      <div class="hint" id="tip">未登录也可提交（建议登录便于追踪）</div>
-
-      <div class="grid">
-        <div class="field">
-          <label>分类</label>
-          <select id="category">
-            <option value="bug">Bug / 功能异常</option>
-            <option value="suggestion">建议 / 体验优化</option>
-            <option value="report">举报 / 虚假信息</option>
-            <option value="other">其他</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>联系方式（可选）</label>
-          <input id="contact" placeholder="微信/手机号/邮箱（可选）" />
-        </div>
-
-        <div class="field w12">
-          <label>标题</label>
-          <input id="title" placeholder="一句话描述问题/建议" />
-        </div>
-
-        <div class="field w12">
-          <label>内容</label>
-          <textarea id="content" placeholder="请详细说明：发生时间、页面、复现步骤、截图说明等…"></textarea>
-        </div>
+      <div class="hd">
+        <h1 class="h1" id="pageTitle">客服与反馈</h1>
+        <p class="sub" id="pageSub">提交问题/建议，我们会处理</p>
       </div>
 
-      <div class="row">
-        <button class="btn primary" id="btnSubmit">提交</button>
-        <span class="hint">提交后会进入后台 reports 表，管理员可处理。</span>
+      <div class="form">
+        <div class="row">
+          <div>
+            <label id="labCat">分类</label>
+            <select id="f_cat">
+              <option value="Bug / 功能异常">Bug / 功能异常</option>
+              <option value="建议 / 体验优化">建议 / 体验优化</option>
+              <option value="房源问题 / 举报">房源问题 / 举报</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div>
+            <label id="labContact">联系方式（可选）</label>
+            <input id="f_contact" placeholder="微信/手机号/邮箱（可选）" />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label id="labTitle">标题</label>
+          <input id="f_title" placeholder="一句话描述问题/建议" />
+        </div>
+
+        <div style="margin-top:10px;">
+          <label id="labContent">内容</label>
+          <textarea id="f_content" placeholder="请详细说明：发生时间、页面、复现步骤、截图说明等…"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="btnSubmit">提交</button>
+          <span class="hint">提交后会进入 reports 表，管理员可处理</span>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <div class="nav">
-    <div class="nav-inner" id="bottomNav">
-      <a href="index.html" data-page="index.html"><span class="ico">🏠</span><span id="navRentTxt">租房</span></a>
-      <a href="submit.html" data-page="submit.html"><span class="ico">➕</span><span id="navSubmitTxt">发布</span></a>
-      <a href="favorites.html" data-page="favorites.html"><span class="ico">⭐</span><span id="navFavTxt">收藏</span></a>
-      <a href="support.html" data-page="support.html" class="active"><span class="ico">💬</span><span id="navSupportTxt">客服</span></a>
+  <div class="tabbar">
+    <div class="tabs">
+      <a class="tab" data-tab="home" id="tabHome"><div class="ic">🏠</div><div>租房</div></a>
+      <a class="tab" data-tab="submit" id="tabSubmit"><div class="ic">➕</div><div>发布</div></a>
+      <a class="tab" data-tab="fav" id="tabFav"><div class="ic">⭐</div><div>收藏</div></a>
+      <a class="tab active" data-tab="support" id="tabSupport"><div class="ic">💬</div><div>客服</div></a>
     </div>
   </div>
 </body>

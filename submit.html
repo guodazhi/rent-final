@@ -1,87 +1,237 @@
 <!doctype html>
-<html lang="zh">
+<html lang="zh-CN" data-lang="zh">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Submit Listing</title>
-  <link rel="icon" href="favicon.ico"/>
-  <link rel="stylesheet" href="assets/styles.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>发布房源 · 翱翔安居</title>
+  <meta name="theme-color" content="#f7f7fb" />
+
+  <!-- ✅ 每个页面都要加的脚本（放在 <head> 里） -->
+  <script defer src="assets/config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{--bg:#f7f7fb;--card:#fff;--text:#121826;--muted:#6b7280;--line:#e5e7eb;--brand:#2563eb;--brand2:#0ea5e9;--shadow:0 10px 30px rgba(17,24,39,.08);--radius:18px;}
+    *{box-sizing:border-box} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text)}
+    a{text-decoration:none;color:inherit}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(247,247,251,.78);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line)}
+    .topbar-inner{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:34px;height:34px;border-radius:10px;overflow:hidden;background:#fff;border:1px solid var(--line);display:grid;place-items:center}
+    .logo img{width:100%;height:100%;object-fit:cover}
+    .brand h1{margin:0;font-size:15px;font-weight:900}
+    .brand small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}
+    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));border:0;color:#fff}
+    .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+    .pill b{color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 90px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    .hero h2{margin:0;font-size:24px}
+    .hero p{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;margin-top:12px}
+    .field{grid-column:span 6}
+    .field.w12{grid-column:span 12}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:14px;outline:none}
+    textarea{min-height:110px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+    .hint{font-size:12px;color:var(--muted)}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;max-width:92vw}
+    .toast.show{opacity:1}
+    .nav{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);border-top:1px solid var(--line)}
+    .nav-inner{max-width:980px;margin:0 auto;display:flex;justify-content:space-around;padding:10px 12px}
+    .nav a{width:25%;text-align:center;color:var(--muted);font-size:12px;font-weight:900;padding:6px 0;border-radius:12px}
+    .nav a.active{color:var(--brand)}
+    .nav .ico{display:block;font-size:18px;margin-bottom:4px}
+    @media (max-width:520px){.field{grid-column:span 12}}
+  </style>
+
+  <script>
+    const I18N={zh:{appName:"翱翔安居 · XATU",appSub:"发布房源（提交后进入审核）",title:"发布房源",sub:"请填写真实信息，提交后会进入待审核",needLogin:"请先登录后再发布",ok:"提交成功：等待审核",errInit:"系统未配置：请检查 assets/config.js",lang:"EN",login:"登录",logout:"退出",rent:"租房",submit:"发布",favorites:"收藏",support:"客服"},
+               en:{appName:"Aoxiang Housing · XATU",appSub:"Post a listing (pending approval)",title:"Post Listing",sub:"Fill in real info. After submit it will be pending approval.",needLogin:"Please login first",ok:"Submitted: waiting for approval",errInit:"Not configured: check assets/config.js",lang:"中文",login:"Login",logout:"Logout",rent:"Rent",submit:"Post",favorites:"Favorites",support:"Support"}};
+    const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+    function getLang(){return localStorage.getItem("APP_LANG")||"zh"} function setLang(l){localStorage.setItem("APP_LANG",l);document.documentElement.setAttribute("data-lang",l);applyI18n()}
+    function t(k){return (I18N[getLang()]&&I18N[getLang()][k])||I18N.zh[k]||k}
+    function showToast(m){const el=$("#toast");el.textContent=m;el.classList.add("show");clearTimeout(window.__tt);window.__tt=setTimeout(()=>el.classList.remove("show"),2200)}
+    function getSupabase(){ if(!window.APP_CONFIG||!APP_CONFIG.SUPABASE_URL||!APP_CONFIG.SUPABASE_ANON_KEY) return null; if(!window.__sb) window.__sb=supabase.createClient(APP_CONFIG.SUPABASE_URL,APP_CONFIG.SUPABASE_ANON_KEY); return window.__sb; }
+    function applyI18n(){
+      $("#appTitle").textContent=t("appName"); $("#appSub").textContent=t("appSub");
+      $("#pageTitle").textContent=t("title"); $("#pageSub").textContent=t("sub");
+      $("#btnLang").textContent=t("lang");
+      $("#btnAuth").textContent=t("login"); $("#btnLogout").textContent=t("logout");
+      $("#navRentTxt").textContent=t("rent"); $("#navSubmitTxt").textContent=t("submit"); $("#navFavTxt").textContent=t("favorites"); $("#navSupportTxt").textContent=t("support");
+    }
+    function setActiveNav(){ const path=location.pathname.split("/").pop()||"submit.html"; $$("#bottomNav a").forEach(a=>a.classList.toggle("active",a.getAttribute("data-page")===path)); }
+
+    async function refreshUserUI(){
+      const sb=getSupabase(); if(!sb){showToast(t("errInit")); $("#btnAuth").style.display="none"; $("#btnLogout").style.display="none"; return;}
+      const {data:{user}}=await sb.auth.getUser();
+      if(user){ $("#userPill").innerHTML=`<span>✅</span><b>${user.email||"User"}</b>`; $("#btnAuth").style.display="none"; $("#btnLogout").style.display="inline-block"; }
+      else{ $("#userPill").innerHTML=`<span>👤</span><b>${t("login")}</b>`; $("#btnAuth").style.display="inline-block"; $("#btnLogout").style.display="none"; }
+    }
+
+    async function ensureLoginOrGo(){
+      const sb=getSupabase();
+      const {data:{user}}=await sb.auth.getUser();
+      if(!user){ showToast(t("needLogin")); location.href="index.html"; }
+      return user;
+    }
+
+    async function submitListing(){
+      const sb=getSupabase();
+      const {data:{user}}=await sb.auth.getUser();
+      if(!user){ showToast(t("needLogin")); return; }
+
+      const payload={
+        title: $("#title").value.trim(),
+        price: Number($("#price").value || 0),
+        location: $("#location").value.trim(),
+        contact: $("#contact").value.trim(),
+        campus: $("#campus").value,
+        rent_type: $("#rtype").value,
+        bath_type: $("#bath").value,
+        metro: $("#metro").value,
+        description: $("#desc").value.trim(),
+        status: "pending",
+        owner_id: user.id
+      };
+
+      if(!payload.title || !payload.location || !payload.contact || !payload.price){
+        showToast("请完整填写：标题/价格/位置/联系方式");
+        return;
+      }
+
+      const { error } = await sb.from("listings").insert(payload);
+      if(error){ showToast(error.message); return; }
+
+      showToast(t("ok"));
+      // 清空
+      $("#title").value=""; $("#price").value=""; $("#location").value=""; $("#contact").value=""; $("#desc").value="";
+      $("#campus").value="友谊校区"; $("#rtype").value="合租"; $("#bath").value="公卫"; $("#metro").value="近地铁";
+    }
+
+    document.addEventListener("DOMContentLoaded", async ()=>{
+      setActiveNav();
+      setLang(getLang());
+      applyI18n();
+
+      $("#btnLang").addEventListener("click", ()=>setLang(getLang()==="zh"?"en":"zh"));
+      $("#btnAuth").addEventListener("click", ()=>location.href="index.html#login");
+      $("#btnLogout").addEventListener("click", async ()=>{const sb=getSupabase(); await sb.auth.signOut(); await refreshUserUI(); showToast("OK");});
+      $("#btnSubmit").addEventListener("click", submitListing);
+
+      const sb=getSupabase();
+      if(!sb){ showToast(t("errInit")); return; }
+      sb.auth.onAuthStateChange(async ()=>refreshUserUI());
+      await refreshUserUI();
+      await ensureLoginOrGo();
+    });
+  </script>
 </head>
+
 <body>
   <div class="topbar">
-    <div class="brand">
-      < img src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
-      <span data-i18n="brand"></span>
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo"><img src="assets/logo.png" alt="logo" onerror="this.style.display='none'"></div>
+        <div>
+          <h1 id="appTitle">翱翔安居 · XATU</h1>
+          <small id="appSub">发布房源（提交后进入审核）</small>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="pill" id="userPill"><span>👤</span><b>登录</b></div>
+        <button class="btn" id="btnLang">EN</button>
+        <button class="btn primary" id="btnAuth">登录</button>
+        <button class="btn" id="btnLogout" style="display:none">退出</button>
+      </div>
     </div>
-    <button class="lang" id="langBtn"></button>
   </div>
 
   <div class="wrap">
-    <div class="h1" data-i18n="submitTitle"></div>
+    <div class="hero">
+      <h2 id="pageTitle">发布房源</h2>
+      <p id="pageSub">请填写真实信息，提交后会进入待审核</p>
+    </div>
 
-    <form id="f">
-      <div class="row">
-        <input class="input" id="title" data-i18n-placeholder="formTitle" placeholder="">
-        <input class="input" id="price" type="number" data-i18n-placeholder="formPrice" placeholder="">
+    <div class="card" style="margin-top:12px">
+      <div class="grid">
+        <div class="field w12">
+          <label>标题 / Title</label>
+          <input id="title" placeholder="e.g. 主卧 / Master Room" />
+        </div>
+
+        <div class="field">
+          <label>价格 / Price</label>
+          <input id="price" type="number" placeholder="e.g. 800" />
+        </div>
+
+        <div class="field">
+          <label>位置 / Location</label>
+          <input id="location" placeholder="e.g. 校门口 / 友谊校区附近" />
+        </div>
+
+        <div class="field w12">
+          <label>联系方式 / Contact</label>
+          <input id="contact" placeholder="e.g. WeChat / Phone" />
+        </div>
+
+        <div class="field">
+          <label>校区 / Campus</label>
+          <select id="campus">
+            <option value="友谊校区">友谊校区</option>
+            <option value="未央校区">未央校区</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>整租/合租</label>
+          <select id="rtype">
+            <option value="合租">合租</option>
+            <option value="整租">整租</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>独卫/公卫</label>
+          <select id="bath">
+            <option value="公卫">公卫</option>
+            <option value="独卫">独卫</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>地铁</label>
+          <select id="metro">
+            <option value="近地铁">近地铁</option>
+            <option value="不靠近">不靠近</option>
+          </select>
+        </div>
+
+        <div class="field w12">
+          <label>描述（可选）</label>
+          <textarea id="desc" placeholder="房型、朝向、楼层、是否可短租、押金方式、照片链接等…"></textarea>
+        </div>
       </div>
-      <div class="row">
-        <input class="input" id="location" data-i18n-placeholder="formLocation" placeholder="">
-        <input class="input" id="contact" data-i18n-placeholder="formContact" placeholder="">
-      </div>
 
       <div class="row">
-        <select class="input" id="campus">
-          <option value="">校区 / Campus</option>
-          <option value="友谊校区">友谊校区</option>
-          <option value="长安校区">长安校区</option>
-          <option value="未央校区">未央校区</option>
-        </select>
-        <select class="input" id="rentType">
-          <option value="">整租/合租</option>
-          <option value="整租">整租</option>
-          <option value="合租">合租</option>
-        </select>
+        <button class="btn primary" id="btnSubmit">提交</button>
+        <span class="hint">提交后进入待审核，审核通过后会出现在首页。</span>
       </div>
-
-      <div class="row">
-        <select class="input" id="bathroom">
-          <option value="">独卫/公卫</option>
-          <option value="独卫">独卫</option>
-          <option value="公卫">公卫</option>
-        </select>
-        <select class="input" id="subway">
-          <option value="">地铁</option>
-          <option value="近地铁">近地铁</option>
-          <option value="不限">不限</option>
-        </select>
-      </div>
-
-      <textarea class="input" id="description" rows="4" data-i18n-placeholder="formDesc" placeholder=""></textarea>
-
-      <div class="row">
-        <button class="btn btnPrimary" type="submit" data-i18n="btnSubmit"></button>
-      </div>
-
-      <div id="status" class="hint"></div>
-      <div class="small">* 提交后进入待审核，审核通过后会出现在首页。</div>
-    </form>
+    </div>
   </div>
+
+  <div class="toast" id="toast"></div>
 
   <div class="nav">
-    <a href=" "><div>🏠</div><div data-i18n="navRent"></div></a >
-    <a class="active" href="submit.html"><div>➕</div><div data-i18n="navSubmit"></div></a >
-    <a href="favorites.html"><div>⭐</div><div data-i18n="navFav"></div></a >
-    <a href="support.html"><div>💬</div><div data-i18n="navSupport"></div></a >
+    <div class="nav-inner" id="bottomNav">
+      <a href="index.html" data-page="index.html"><span class="ico">🏠</span><span id="navRentTxt">租房</span></a>
+      <a href="submit.html" data-page="submit.html" class="active"><span class="ico">➕</span><span id="navSubmitTxt">发布</span></a>
+      <a href="favorites.html" data-page="favorites.html"><span class="ico">⭐</span><span id="navFavTxt">收藏</span></a>
+      <a href="support.html" data-page="support.html"><span class="ico">💬</span><span id="navSupportTxt">客服</span></a>
+    </div>
   </div>
-
-  <script src="assets/i18n.js"></script>
-  <script src="assets/app.js"></script>
-  <script>
-    I18N_HELPER.applyI18n();
-    document.getElementById("langBtn").onclick = ()=>{
-      I18N_HELPER.setLang(I18N_HELPER.getLang()==="zh"?"en":"zh");
-    };
-    document.getElementById("f").addEventListener("submit", APP.submitListing);
-  </script>
 </body>
 </html>

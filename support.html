@@ -1,174 +1,134 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>客服与反馈 · 翱翔安居</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>客服与反馈 - 翻翔安居 · XATU</title>
 
-  <!-- ✅ 每个页面都要加的脚本（放在 head） -->
-  <script src="assets/config.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="/assets/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--pri:#2563eb;--pri2:#1d4ed8;--shadow:0 10px 30px rgba(17,24,39,.08);--r:16px;}
+    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--primary:#2563eb;--primary2:#1d4ed8;--border:#e5e7eb;--shadow:0 10px 30px rgba(0,0,0,.06);--r:16px}
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial;background:var(--bg);color:var(--text)}
-    .topbar{position:sticky;top:0;z-index:20;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-    .topbar-inner{max-width:980px;margin:0 auto;padding:12px 14px;display:flex;align-items:center;gap:12px}
-    .btn-ghost{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer}
-    .brand{display:flex;align-items:center;gap:10px;min-width:260px}
-    .logo{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;object-fit:cover}
-    .brand h1{margin:0;font-size:14px}
-    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
-    .sp{flex:1}
-    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-size:12px;cursor:pointer}
-    .btn{border:1px solid transparent;background:var(--pri);color:#fff;border-radius:12px;padding:9px 12px;cursor:pointer;font-weight:700}
-    .btn:hover{background:var(--pri2)}
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 90px}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px}
-    .title{font-size:20px;margin:0 0 4px}
-    .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
-    .grid{display:grid;gap:12px}
-    @media(min-width:860px){.grid{grid-template-columns:repeat(2,1fr)}}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial}
+    .top{position:sticky;top:0;z-index:50;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .topin{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
+    .btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:13px;cursor:pointer}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn.primary:hover{background:var(--primary2)}
+    .container{max-width:1100px;margin:0 auto;padding:18px 16px 96px}
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+    .title{margin:10px 0 6px;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .field label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-    .field input,.field select,.field textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;outline:none}
-    textarea{min-height:130px;resize:vertical}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-    .btn-lite{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer}
-    .warn{margin-top:10px;color:#b45309;font-size:12px;display:flex;gap:8px;align-items:center}
-    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line)}
-    .nav-inner{max-width:980px;margin:0 auto;display:flex}
-    .nav a{flex:1;padding:10px 6px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center}
-    .nav a.active{color:var(--pri);font-weight:800}
-    .ico{font-size:16px}
+    .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;outline:none;background:#fff}
+    .field textarea{min-height:140px;resize:vertical}
+    .hint{font-size:12px;color:var(--muted)}
+    .err{color:#b91c1c;font-size:13px;margin-top:10px;display:none}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);display:flex;justify-content:center;z-index:60}
+    .navin{width:min(1100px,100%);display:flex;justify-content:space-around;padding:10px}
+    .nav a{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:8px 12px;border-radius:12px;text-decoration:none}
+    .nav a.active{color:var(--primary);background:rgba(37,99,235,.08);font-weight:700}
+    @media(max-width:860px){.grid2{grid-template-columns:1fr}}
   </style>
 </head>
-
 <body>
-  <div class="topbar">
-    <div class="topbar-inner">
-      <button class="btn-ghost" id="btnBack">← 返回</button>
-      <div class="brand">
-        <img class="logo" src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
-        <div>
-          <h1>翱翔安居 · XATU</h1>
-          <p>客服 / 反馈</p>
-        </div>
-      </div>
-      <div class="sp"></div>
-      <button class="chip" id="btnLang">EN</button>
-      <button class="btn" id="btnLogin">登录</button>
+  <div class="top">
+    <div class="topin">
+      <button class="btn" onclick="history.back()">← 返回</button>
+      <div style="font-weight:800">客服与反馈</div>
+      <div style="color:var(--muted);font-size:12px">提交问题/建议，我们会处理</div>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="location.href='/'">去浏览</button>
     </div>
   </div>
 
-  <div class="wrap">
+  <div class="container">
     <div class="panel">
-      <h2 class="title">客服与反馈</h2>
-      <p class="sub">提交问题/建议，我们会处理</p>
+      <div class="title">客服与反馈</div>
+      <div class="sub">未登录也可提交（建议留下联系方式）</div>
 
-      <div class="grid">
+      <div class="grid2">
         <div class="field">
           <label>分类</label>
           <select id="category">
-            <option value="Bug">Bug / 功能异常</option>
-            <option value="Suggestion">建议 / 优化</option>
-            <option value="Report">举报 / 违规</option>
-            <option value="Other">其他</option>
+            <option>Bug / 功能异常</option>
+            <option>体验建议</option>
+            <option>内容举报</option>
+            <option>其他</option>
           </select>
         </div>
         <div class="field">
           <label>联系方式（可选）</label>
-          <input id="contact" placeholder="微信/手机号/邮箱（可选）" />
-        </div>
-
-        <div class="field" style="grid-column:1/-1">
-          <label>标题</label>
-          <input id="title" placeholder="一句话描述问题/建议" />
-        </div>
-
-        <div class="field" style="grid-column:1/-1">
-          <label>内容</label>
-          <textarea id="content" placeholder="请详细说明：发生时间、页面、复现步骤、截图说明等…"></textarea>
+          <input id="contact" placeholder="微信/手机号/邮箱（可选）">
         </div>
       </div>
 
-      <div class="row">
-        <button class="btn" id="sendBtn">提交</button>
-        <button class="btn-lite" id="clearBtn">清空</button>
-        <span style="font-size:12px;color:#6b7280" id="msg"></span>
+      <div class="field" style="margin-top:10px">
+        <label>标题</label>
+        <input id="title" placeholder="一句话描述问题/建议">
       </div>
 
-      <div class="warn" id="warn" style="display:none">⚠️ <span id="warnText"></span></div>
+      <div class="field" style="margin-top:10px">
+        <label>内容</label>
+        <textarea id="content" placeholder="请详细说明：发生时间、页面、复现步骤、截图说明等…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+        <button class="btn primary" id="btnSend" onclick="submitReport()">提交</button>
+        <span class="hint">提交后写入 Supabase：reports</span>
+      </div>
+
+      <div id="err" class="err"></div>
     </div>
   </div>
 
   <div class="nav">
-    <div class="nav-inner">
-      <a href="./index.html"><div class="ico">🏠</div><div>租房</div></a>
-      <a href="./submit.html"><div class="ico">➕</div><div>发布</div></a>
-      <a href="./favorites.html"><div class="ico">⭐</div><div>收藏</div></a>
-      <a class="active" href="./support.html"><div class="ico">💬</div><div>客服</div></a>
+    <div class="navin">
+      <a href="/"><span>🏠</span><span>租房</span></a>
+      <a href="/submit"><span>➕</span><span>发布</span></a>
+      <a href="/favorites"><span>⭐</span><span>收藏</span></a>
+      <a class="active" href="/support"><span>🛟</span><span>客服</span></a>
     </div>
   </div>
 
   <script>
-    const LANG_KEY="xatu_lang";
-    function getLang(){return localStorage.getItem(LANG_KEY)||"zh";}
-    function setLang(v){localStorage.setItem(LANG_KEY,v);location.reload();}
+    window.sb = window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
 
-    function cfgOk(){
-      return window.APP_CONFIG
-        && typeof window.APP_CONFIG.SUPABASE_URL==="string"
-        && window.APP_CONFIG.SUPABASE_URL.startsWith("http")
-        && typeof window.APP_CONFIG.SUPABASE_ANON_KEY==="string"
-        && window.APP_CONFIG.SUPABASE_ANON_KEY.length>20;
-    }
-    const sb = cfgOk() ? supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY) : null;
+    function setErr(msg){ const e=document.getElementById("err"); e.style.display=msg?'block':'none'; e.textContent=msg||''; }
 
-    function back(){ if(history.length>1) history.back(); else location.href="./index.html"; }
-    document.getElementById("btnBack").onclick=back;
-    document.getElementById("btnLang").onclick=()=>setLang(getLang()==="en"?"zh":"en");
-    document.getElementById("btnLogin").onclick=()=>location.href="./index.html"; // 登录入口在首页弹窗
-
-    function warn(msg){
-      document.getElementById("warnText").textContent=msg;
-      document.getElementById("warn").style.display="flex";
-    }
-    function clearWarn(){ document.getElementById("warn").style.display="none"; }
-
-    document.getElementById("clearBtn").onclick=()=>{
-      ["contact","title","content"].forEach(id=>document.getElementById(id).value="");
-      clearWarn(); document.getElementById("msg").textContent="";
-    };
-
-    document.getElementById("sendBtn").onclick=async()=>{
-      clearWarn();
-      if(!sb) return warn("未配置 Supabase：请先填写 assets/config.js");
-
-      const payload={
-        category: document.getElementById("category").value,
-        contact: document.getElementById("contact").value.trim(),
-        title: document.getElementById("title").value.trim(),
-        content: document.getElementById("content").value.trim()
-      };
-      if(!payload.title || !payload.content) return warn("标题和内容必填");
-
+    async function submitReport(){
+      setErr("");
+      const btn=document.getElementById("btnSend");
+      btn.disabled=true; btn.textContent="提交中…";
       try{
-        // 如果你 reports 表有 student_id / user_id 字段，登录后补上
-        const {data:ud}=await sb.auth.getUser();
-        if(ud?.user){
-          payload.user_id = ud.user.id; // 若列不存在会报错 → 你就把这行删掉
-        }
+        const category=document.getElementById("category").value;
+        const contact=document.getElementById("contact").value.trim();
+        const title=document.getElementById("title").value.trim();
+        const content=document.getElementById("content").value.trim();
 
-        const {error}=await sb.from("reports").insert(payload);
-        if(error) throw error;
+        if(!title) throw new Error("请填写标题");
+        if(!content) throw new Error("请填写内容");
 
-        document.getElementById("msg").textContent="✅ 已提交，感谢反馈";
-        setTimeout(()=>location.href="./index.html", 700);
+        const { data: u } = await window.sb.auth.getUser();
+        const user_id = u?.user?.id || null;
+
+        const { error } = await window.sb.from("reports").insert({
+          category, contact, title, content, user_id
+        });
+        if(error) throw new Error(error.message);
+
+        alert("提交成功：感谢反馈");
+        document.getElementById("title").value="";
+        document.getElementById("content").value="";
       }catch(e){
-        warn("提交失败："+(e.message||e)+"（如果报列不存在，把 user_id 那行删掉）");
+        setErr("提交失败：" + e.message);
+      }finally{
+        btn.disabled=false; btn.textContent="提交";
       }
-    };
+    }
   </script>
 </body>
 </html>

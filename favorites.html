@@ -1,191 +1,128 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>收藏 · 翱翔安居</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>收藏 - 翻翔安居 · XATU</title>
 
-  <!-- ✅ 每个页面都要加的脚本（放在 head） -->
-  <script src="assets/config.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="/assets/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--pri:#2563eb;--pri2:#1d4ed8;--shadow:0 10px 30px rgba(17,24,39,.08);--r:16px;}
+    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--primary:#2563eb;--border:#e5e7eb;--shadow:0 10px 30px rgba(0,0,0,.06);--r:16px}
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial;background:var(--bg);color:var(--text)}
-    .topbar{position:sticky;top:0;z-index:20;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-    .topbar-inner{max-width:980px;margin:0 auto;padding:12px 14px;display:flex;align-items:center;gap:12px}
-    .btn-ghost{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer}
-    .brand{display:flex;align-items:center;gap:10px;min-width:260px}
-    .logo{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;object-fit:cover}
-    .brand h1{margin:0;font-size:14px}
-    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
-    .sp{flex:1}
-    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-size:12px;cursor:pointer}
-    .btn{border:1px solid transparent;background:var(--pri);color:#fff;border-radius:12px;padding:9px 12px;cursor:pointer;font-weight:700}
-    .btn:hover{background:var(--pri2)}
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 90px}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px}
-    .title{font-size:20px;margin:0 0 4px}
-    .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
-    .warn{margin-top:10px;color:#b45309;font-size:12px;display:flex;gap:8px;align-items:center}
-    .list{margin-top:14px;display:grid;gap:12px}
-    @media(min-width:860px){.list{grid-template-columns:repeat(2,1fr)}}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:8px}
-    .t{display:flex;align-items:center;gap:10px}
-    .tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:999px;background:#fff}
-    .btn-lite{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer}
-    .actions{display:flex;gap:10px;margin-top:6px}
-    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line)}
-    .nav-inner{max-width:980px;margin:0 auto;display:flex}
-    .nav a{flex:1;padding:10px 6px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center}
-    .nav a.active{color:var(--pri);font-weight:800}
-    .ico{font-size:16px}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial}
+    .top{position:sticky;top:0;z-index:50;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .topin{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
+    .btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:13px;cursor:pointer}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .container{max-width:1100px;margin:0 auto;padding:18px 16px 96px}
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+    .title{margin:10px 0 6px;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+    .list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+    .card-title{font-weight:800}
+    .price{font-weight:900;font-size:18px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto}
+    .hint{font-size:12px;color:var(--muted)}
+    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);display:flex;justify-content:center;z-index:60}
+    .navin{width:min(1100px,100%);display:flex;justify-content:space-around;padding:10px}
+    .nav a{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:8px 12px;border-radius:12px;text-decoration:none}
+    .nav a.active{color:var(--primary);background:rgba(37,99,235,.08);font-weight:700}
+    @media(max-width:860px){.list{grid-template-columns:1fr}}
   </style>
 </head>
-
 <body>
-  <div class="topbar">
-    <div class="topbar-inner">
-      <button class="btn-ghost" id="btnBack">← 返回</button>
-      <div class="brand">
-        <img class="logo" src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
-        <div>
-          <h1>翱翔安居 · XATU</h1>
-          <p>我的收藏</p>
-        </div>
-      </div>
-      <div class="sp"></div>
-      <button class="chip" id="btnLang">EN</button>
-      <button class="btn" id="btnLogin">登录</button>
+  <div class="top">
+    <div class="topin">
+      <button class="btn" onclick="history.back()">← 返回</button>
+      <div style="font-weight:800">收藏</div>
+      <div style="color:var(--muted);font-size:12px">这里显示你收藏的房源</div>
+      <div style="flex:1"></div>
+      <button class="btn primary" onclick="ensureLogin(true)">登录</button>
     </div>
   </div>
 
-  <div class="wrap">
+  <div class="container">
     <div class="panel">
-      <h2 class="title">收藏</h2>
-      <p class="sub">这里显示你收藏的房源</p>
-      <div class="warn" id="warn" style="display:none">⚠️ <span id="warnText"></span></div>
-      <div class="list" id="list"></div>
+      <div class="title">收藏</div>
+      <div class="sub">只有登录用户才能看到自己的收藏</div>
+
+      <div id="hint" class="hint"></div>
+      <div id="list" class="list" style="margin-top:12px"></div>
     </div>
   </div>
 
   <div class="nav">
-    <div class="nav-inner">
-      <a href="./index.html"><div class="ico">🏠</div><div>租房</div></a>
-      <a href="./submit.html"><div class="ico">➕</div><div>发布</div></a>
-      <a class="active" href="./favorites.html"><div class="ico">⭐</div><div>收藏</div></a>
-      <a href="./support.html"><div class="ico">💬</div><div>客服</div></a>
+    <div class="navin">
+      <a href="/"><span>🏠</span><span>租房</span></a>
+      <a href="/submit"><span>➕</span><span>发布</span></a>
+      <a class="active" href="/favorites"><span>⭐</span><span>收藏</span></a>
+      <a href="/support"><span>🛟</span><span>客服</span></a>
     </div>
   </div>
 
   <script>
-    const LANG_KEY="xatu_lang";
-    function getLang(){return localStorage.getItem(LANG_KEY)||"zh";}
-    function setLang(v){localStorage.setItem(LANG_KEY,v);location.reload();}
+    window.sb = window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
 
-    function cfgOk(){
-      return window.APP_CONFIG
-        && typeof window.APP_CONFIG.SUPABASE_URL==="string"
-        && window.APP_CONFIG.SUPABASE_URL.startsWith("http")
-        && typeof window.APP_CONFIG.SUPABASE_ANON_KEY==="string"
-        && window.APP_CONFIG.SUPABASE_ANON_KEY.length>20;
-    }
-    const sb = cfgOk() ? supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY) : null;
-
-    function back(){ if(history.length>1) history.back(); else location.href="./index.html"; }
-    document.getElementById("btnBack").onclick=back;
-    document.getElementById("btnLang").onclick=()=>setLang(getLang()==="en"?"zh":"en");
-    document.getElementById("btnLogin").onclick=()=>location.href="./index.html"; // 登录入口在首页弹窗
-
-    function warn(msg){
-      document.getElementById("warnText").textContent=msg;
-      document.getElementById("warn").style.display="flex";
+    async function ensureLogin(onlyOpen){
+      const { data } = await window.sb.auth.getUser();
+      if(data?.user) return data.user;
+      if(onlyOpen) { alert("请先在任意页面登录"); return null; }
+      throw new Error("未登录");
     }
 
-    function escapeHtml(s){
-      return String(s||"").replace(/[&<>"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-    }
+    function esc(s){ return String(s||"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
 
-    function card(row){
-      const el=document.createElement("div");
-      el.className="card";
-      el.innerHTML=`
-        <div class="t">
-          <div style="font-weight:800">${escapeHtml(row.title||"房源")}</div>
-          <div style="flex:1"></div>
-          <div class="tag">${escapeHtml(row.campus||"-")}</div>
-        </div>
-        <div class="t">
-          <div class="tag">${escapeHtml(row.rent_type||"-")}</div>
-          <div class="tag">${escapeHtml(row.bathroom||"-")}</div>
-          <div class="tag">${escapeHtml(row.metro||"-")}</div>
-        </div>
-        <div class="t">
-          <div style="font-weight:900">¥ ${escapeHtml(String(row.price??"-"))}</div>
-          <div style="flex:1"></div>
-          <div style="font-size:12px;color:#6b7280">${escapeHtml(row.location||"")}</div>
-        </div>
-        <div class="actions">
-          <button class="btn-lite" data-act="rm">⭐ 取消收藏</button>
-          <button class="btn" data-act="ct">☎ 联系</button>
-        </div>
-      `;
-      el.querySelector('[data-act="ct"]').onclick=()=>{
-        const c=row.contact||row.contact_info||row.wechat||"";
-        if(!c) return alert(getLang()==="en"?"No contact":"暂无联系方式");
-        navigator.clipboard?.writeText(c);
-        alert((getLang()==="en"?"Copied: ":"已复制：")+c);
-      };
-      el.querySelector('[data-act="rm"]').onclick=async()=>{
-        const {data:ud}=await sb.auth.getUser();
-        if(!ud?.user) return alert(getLang()==="en"?"Please login":"请先登录");
-        await sb.from("favorites").delete().eq("user_id",ud.user.id).eq("listing_id",row.id);
-        load();
-      };
-      return el;
-    }
-
-    async function load(){
+    async function loadFavorites(){
+      const hint=document.getElementById("hint");
       const list=document.getElementById("list");
       list.innerHTML="";
-      if(!sb) return warn("未配置 Supabase：请先填写 assets/config.js");
+      hint.textContent="加载中…";
 
-      const {data:ud}=await sb.auth.getUser();
-      if(!ud?.user){
-        warn("未登录：请先到首页右上角登录后查看收藏");
-        return;
-      }
+      const user = await ensureLogin(true);
+      if(!user){ hint.textContent="未登录：请先登录后查看收藏"; return; }
 
-      // favorites -> listings
-      const { data: favs, error: e1 } = await sb
+      // favorites join listings
+      const { data, error } = await window.sb
         .from("favorites")
-        .select("listing_id")
-        .eq("user_id", ud.user.id);
+        .select("id, created_at, listing_id, listings(*)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending:false });
 
-      if(e1) return warn("读取收藏失败："+(e1.message||e1));
+      if(error){ hint.textContent="读取收藏失败：" + error.message; return; }
 
-      const ids = (favs||[]).map(x=>x.listing_id);
-      if(!ids.length){
-        const p=document.createElement("div");
-        p.className="panel";
-        p.textContent=getLang()==="en"?"No favorites yet.":"暂无收藏";
-        list.appendChild(p);
-        return;
-      }
-
-      const { data: rows, error: e2 } = await sb
-        .from("listings")
-        .select("*")
-        .in("id", ids)
-        .limit(50);
-
-      if(e2) return warn("读取房源失败："+(e2.message||e2));
-
-      (rows||[]).forEach(r=>list.appendChild(card(r)));
+      hint.textContent = data?.length ? `共 ${data.length} 条收藏` : "暂无收藏";
+      (data||[]).forEach(row=>{
+        const x=row.listings || {};
+        const div=document.createElement("div");
+        div.className="card";
+        div.innerHTML=`
+          <div class="card-title">${esc(x.title||"未命名房源")}</div>
+          <div class="hint">${esc(x.campus||"")} · ${esc(x.rent_type||"")} · ${esc(x.toilet_type||"")} · ${esc(x.metro||"")}</div>
+          <div class="price">¥ ${esc(String(x.price ?? ""))}</div>
+          <div class="row">
+            <button class="btn" onclick="removeFav('${row.id}')">取消收藏</button>
+            <button class="btn primary" onclick="showContact('${esc((x.contact||"").replace(/'/g,"\\'"))}')">联系</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
     }
 
-    load();
+    function showContact(c){
+      if(!c) return alert("该房源未填写联系方式");
+      alert("联系方式：\n" + c);
+    }
+
+    async function removeFav(favId){
+      const { error } = await window.sb.from("favorites").delete().eq("id", favId);
+      if(error) return alert("取消失败：" + error.message);
+      await loadFavorites();
+    }
+
+    loadFavorites();
   </script>
 </body>
 </html>

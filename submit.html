@@ -1,234 +1,155 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>发布房源 - 翻翔安居 · XATU</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>发布房源 · 翱翔安居 XATU</title>
 
   <script src="/assets/config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    :root{--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--primary:#2563eb;--primary2:#1d4ed8;--border:#e5e7eb;--shadow:0 10px 30px rgba(0,0,0,.06);--r:16px}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial}
-    .top{position:sticky;top:0;z-index:50;background:rgba(246,247,251,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-    .topin{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
-    .btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-    .btn.primary:hover{background:var(--primary2)}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#93c5fd,#1d4ed8);box-shadow:var(--shadow)}
-    .brand h1{font-size:15px;margin:0}
-    .brand p{font-size:12px;margin:0;color:var(--muted)}
-    .spacer{flex:1}
-    .container{max-width:1100px;margin:0 auto;padding:18px 16px 96px}
-    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
-    .title{margin:10px 0 6px;font-size:22px}
-    .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .field label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-    .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;outline:none;background:#fff}
-    .field textarea{min-height:120px;resize:vertical}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
-    .hint{font-size:12px;color:var(--muted)}
-    .err{color:#b91c1c;font-size:13px;margin-top:10px;display:none}
-    .nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);display:flex;justify-content:center;z-index:60}
-    .navin{width:min(1100px,100%);display:flex;justify-content:space-around;padding:10px}
-    .nav a{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:8px 12px;border-radius:12px;text-decoration:none}
-    .nav a.active{color:var(--primary);background:rgba(37,99,235,.08);font-weight:700}
-    @media(max-width:860px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
-  </style>
+  <link rel="stylesheet" href="/assets/app.css" />
+  <script defer src="/assets/app.js"></script>
 </head>
 <body>
-  <div class="top">
-    <div class="topin">
-      <button class="btn" onclick="history.back()">← 返回</button>
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <h1>翻翔安居 · XATU</h1>
-          <p>发布房源（提交后进入待审核）</p>
+  <div class="container pad-bottom">
+    <div class="shell">
+      <div class="topbar">
+        <a class="backbtn" href=" " aria-label="back">← 返回</a >
+
+        <div class="brand">
+          < img src="/assets/logo.png" alt="logo" />
+          <div>
+            <div class="title">翱翔安居 · XATU</div>
+            <div class="sub">发布房源（提交后进入待审核）</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="pill" href="/favorites.html">⭐ <small>收藏</small></a >
+          <a class="pill" href="/support.html">💬 <small>客服</small></a >
         </div>
       </div>
-      <div class="spacer"></div>
-      <button class="btn" onclick="location.href='/'">去浏览</button>
-      <button class="btn primary" onclick="openAuthModal()">登录</button>
+
+      <div class="header">
+        <div class="h1">发布房源</div>
+        <div class="h2">请填写真实信息，提交后进入待审核</div>
+      </div>
+
+      <div class="card filters">
+        <div class="grid" style="grid-template-columns: 2fr 1fr 1fr; gap:12px">
+          <div class="field">
+            <label>标题 / Title</label>
+            <input id="title" placeholder="e.g. 主卧 / Master Room" />
+          </div>
+          <div class="field">
+            <label>价格 / Price</label>
+            <input id="price" placeholder="e.g. 800" />
+          </div>
+          <div class="field">
+            <label>位置 / Location</label>
+            <input id="location" placeholder="e.g. 校门口 / 友谊校区附近" />
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top:12px">
+          <div class="field">
+            <label>联系方式 / Contact</label>
+            <input id="contact" placeholder="e.g. WeChat / Phone" />
+          </div>
+          <div class="field">
+            <label>校区 / Campus</label>
+            <select id="campus">
+              <option>友谊校区</option>
+              <option>未央校区</option>
+              <option>金花校区</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>整租/合租</label>
+            <select id="rent_type">
+              <option>整租</option>
+              <option>合租</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>独卫/公卫</label>
+            <select id="bath_type">
+              <option>独卫</option>
+              <option>公卫</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>地铁</label>
+            <select id="subway">
+              <option>近地铁</option>
+              <option>不近地铁</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column:1 / -1">
+            <label>描述（可选）</label>
+            <textarea id="description" placeholder="房型、朝向、楼层、是否可短租、押金方式、照片链接等…"></textarea>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="btnSubmit">提交</button>
+          <div class="badge">提交后进入待审核，审核通过后展示在首页。</div>
+        </div>
+
+        <div class="notice" id="msg" style="display:none"></div>
+      </div>
     </div>
   </div>
 
-  <div class="container">
-    <div class="panel">
-      <div class="title">发布房源</div>
-      <div class="sub">请填写真实信息，提交后进入待审核</div>
-
-      <div class="field">
-        <label>标题 / Title</label>
-        <input id="title" placeholder="e.g. 主卧 / Master Room">
-      </div>
-
-      <div class="grid2" style="margin-top:10px">
-        <div class="field">
-          <label>价格 / Price</label>
-          <input id="price" type="number" placeholder="e.g. 800">
-        </div>
-        <div class="field">
-          <label>位置 / Location</label>
-          <input id="location" placeholder="e.g. 校门口 / 友谊校区附近">
-        </div>
-      </div>
-
-      <div class="field" style="margin-top:10px">
-        <label>联系方式 / Contact</label>
-        <input id="contact" placeholder="e.g. WeChat / Phone">
-      </div>
-
-      <div class="grid4" style="margin-top:10px">
-        <div class="field">
-          <label>校区 / Campus</label>
-          <select id="campus">
-            <option>友谊校区</option>
-            <option>金花校区</option>
-            <option>未央校区</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>整租/合租</label>
-          <select id="rent_type">
-            <option>合租</option>
-            <option>整租</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>独卫/公卫</label>
-          <select id="toilet_type">
-            <option>公卫</option>
-            <option>独卫</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>地铁</label>
-          <select id="metro">
-            <option>近地铁</option>
-            <option>不近地铁</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field" style="margin-top:10px">
-        <label>描述（可选）</label>
-        <textarea id="description" placeholder="房型、朝向、楼层、是否可短租、押金方式、照片链接等…"></textarea>
-      </div>
-
-      <div class="row">
-        <button class="btn primary" id="btnSubmit" onclick="submitListing()">提交</button>
-        <span class="hint">提交后写入 Supabase：listings（建议后续加审核字段）</span>
-      </div>
-
-      <div id="err" class="err"></div>
-    </div>
-  </div>
-
-  <div class="nav">
-    <div class="navin">
-      <a href="/"><span>🏠</span><span>租房</span></a>
-      <a class="active" href="/submit"><span>➕</span><span>发布</span></a>
-      <a href="/favorites"><span>⭐</span><span>收藏</span></a>
-      <a href="/support"><span>🛟</span><span>客服</span></a>
-    </div>
-  </div>
-
-  <!-- 极简 Auth（与 index 同逻辑，避免你到处维护） -->
-  <div id="authModal" style="position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:80;padding:16px" onclick="if(event.target.id==='authModal')closeAuthModal()">
-    <div style="width:min(520px,100%);background:#fff;border-radius:18px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)">
-        <div style="font-weight:700">登录 / 注册</div>
-        <div style="cursor:pointer;padding:6px 10px;border-radius:10px;color:var(--muted)" onclick="closeAuthModal()">✕</div>
-      </div>
-      <div style="padding:16px">
-        <div class="grid2">
-          <div class="field"><label>Email</label><input id="authEmail" placeholder="name@example.com"></div>
-          <div class="field"><label>密码</label><input id="authPass" type="password" placeholder="••••••••"></div>
-        </div>
-        <div id="authErr" class="err" style="display:none;margin-top:10px"></div>
-        <div class="row" style="justify-content:flex-end">
-          <button class="btn primary" onclick="doLogin()">登录</button>
-          <button class="btn" onclick="doRegister()">注册</button>
-        </div>
-      </div>
+  <div class="tabs">
+    <div class="inner">
+      <a class="tab" href="/"><div class="dot">🏠</div><div>租房</div></a >
+      <a class="tab active" href="/submit.html"><div class="dot">＋</div><div>发布</div></a >
+      <a class="tab" href="/favorites.html"><div class="dot">⭐</div><div>收藏</div></a >
+      <a class="tab" href="/support.html"><div class="dot">💬</div><div>客服</div></a >
     </div>
   </div>
 
   <script>
-    window.sb = window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
+    (async function(){
+      const { XATU } = window;
+      await XATU.auth.setSessionFromUrlIfPresent();
 
-    function openAuthModal(){ document.getElementById("authModal").style.display="flex"; }
-    function closeAuthModal(){ document.getElementById("authModal").style.display="none"; }
-    function setErr(msg){ const e=document.getElementById("err"); e.style.display=msg?'block':'none'; e.textContent=msg||''; }
-    function setAuthErr(msg){ const e=document.getElementById("authErr"); e.style.display=msg?'block':'none'; e.textContent=msg||''; }
+      const msg = document.getElementById("msg");
+      const btn = document.getElementById("btnSubmit");
 
-    async function doLogin(){
-      setAuthErr("");
-      const email=document.getElementById("authEmail").value.trim();
-      const password=document.getElementById("authPass").value;
-      const { error } = await window.sb.auth.signInWithPassword({ email, password });
-      if(error) return setAuthErr(error.message);
-      closeAuthModal();
-      alert("登录成功");
-    }
-    async function doRegister(){
-      setAuthErr("");
-      const email=document.getElementById("authEmail").value.trim();
-      const password=document.getElementById("authPass").value;
-      const redirectTo = location.origin + "/";
-      const { error } = await window.sb.auth.signUp({ email, password, options:{ emailRedirectTo: redirectTo } });
-      if(error) return setAuthErr(error.message);
-      alert("注册成功：去邮箱点确认链接，然后回来登录");
-    }
-
-    async function ensureLogin(){
-      const { data } = await window.sb.auth.getUser();
-      if(data?.user) return data.user;
-      openAuthModal();
-      throw new Error("请先登录");
-    }
-
-    async function submitListing(){
-      setErr("");
-      const btn=document.getElementById("btnSubmit");
-      btn.disabled=true; btn.textContent="提交中…";
-      try{
-        const user = await ensureLogin();
+      btn.onclick = async () => {
+        XATU.ui.setNotice(msg, "", "notice");
 
         const payload = {
           title: document.getElementById("title").value.trim(),
-          price: Number(document.getElementById("price").value || 0),
+          price: Number(document.getElementById("price").value.trim() || 0),
           location: document.getElementById("location").value.trim(),
           contact: document.getElementById("contact").value.trim(),
           campus: document.getElementById("campus").value,
           rent_type: document.getElementById("rent_type").value,
-          toilet_type: document.getElementById("toilet_type").value,
-          metro: document.getElementById("metro").value,
-          description: document.getElementById("description").value.trim(),
-          user_id: user.id
+          bath_type: document.getElementById("bath_type").value,
+          subway: document.getElementById("subway").value,
+          description: document.getElementById("description").value.trim() || null,
+          status: "pending"
         };
 
-        if(!payload.title) throw new Error("请填写标题");
-        if(!payload.price) throw new Error("请填写价格");
-        if(!payload.contact) throw new Error("请填写联系方式");
+        if(!payload.title || !payload.location || !payload.contact || !payload.price){
+          XATU.ui.setNotice(msg, "请至少填写：标题、价格、位置、联系方式", "err");
+          return;
+        }
 
-        const { error } = await window.sb.from("listings").insert(payload);
-        if(error) throw new Error(error.message);
-
-        alert("提交成功：已进入待审核（你后续可加审核流程）");
-        location.href="/";
-      }catch(e){
-        setErr("提交失败：" + e.message);
-      }finally{
-        btn.disabled=false; btn.textContent="提交";
-      }
-    }
+        try{
+          btn.disabled = true;
+          await XATU.listings.create(payload);
+          XATU.ui.setNotice(msg, "提交成功：已进入待审核。", "ok");
+          setTimeout(()=> location.href="/", 700);
+        }catch(e){
+          XATU.ui.setNotice(msg, "提交失败：" + e.message + "（请检查 listings 表 insert policy / RLS）", "err");
+        }finally{
+          btn.disabled = false;
+        }
+      };
+    })();
   </script>
 </body>
 </html>

@@ -1,571 +1,477 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>翱翔安居 · XATU</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>租房浏览 - 翻翔安居 · XATU</title>
 
-  <!-- ✅ 每个页面都要加的脚本（放在 head） -->
-  <script src="assets/config.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- ✅ 每页必带 -->
+  <script src="/assets/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
-      --bg:#f6f7fb; --card:#ffffff; --text:#111827; --muted:#6b7280;
-      --line:#e5e7eb; --pri:#2563eb; --pri2:#1d4ed8; --shadow:0 10px 30px rgba(17,24,39,.08);
-      --r:16px;
+      --bg:#f6f7fb; --card:#fff; --text:#111827; --muted:#6b7280;
+      --primary:#2563eb; --primary2:#1d4ed8; --border:#e5e7eb;
+      --shadow: 0 10px 30px rgba(0,0,0,.06);
+      --radius:16px;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial;background:var(--bg);color:var(--text)}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial}
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 90px}
+    .container{max-width:1100px;margin:0 auto;padding:18px 16px 96px}
     .topbar{
-      position:sticky;top:0;z-index:20;
-      backdrop-filter:saturate(180%) blur(10px);
-      background:rgba(246,247,251,.85);
-      border-bottom:1px solid var(--line);
+      position:sticky;top:0;z-index:50;background:rgba(246,247,251,.82);
+      backdrop-filter: blur(10px);border-bottom:1px solid var(--border);
     }
-    .topbar-inner{max-width:980px;margin:0 auto;padding:12px 14px;display:flex;align-items:center;gap:12px}
-    .btn-ghost{
-      border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer;
-      display:inline-flex;align-items:center;gap:8px;color:var(--text)
-    }
-    .btn-ghost:hover{border-color:#cbd5e1}
-    .brand{display:flex;align-items:center;gap:10px;min-width:260px}
-    .logo{
-      width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid var(--line);display:block;object-fit:cover;
-    }
-    .brand h1{margin:0;font-size:14px;line-height:1.1}
-    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
-    .sp{flex:1}
-    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-size:12px;cursor:pointer}
-    .chip:hover{border-color:#cbd5e1}
+    .topbar-inner{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#93c5fd,#1d4ed8);box-shadow:var(--shadow)}
+    .brand h1{font-size:15px;margin:0;line-height:1.1}
+    .brand p{font-size:12px;margin:0;color:var(--muted)}
+    .spacer{flex:1}
     .btn{
-      border:1px solid transparent;background:var(--pri);color:#fff;border-radius:12px;padding:9px 12px;cursor:pointer;
-      font-weight:600
+      border:1px solid var(--border);background:#fff;border-radius:12px;
+      padding:8px 12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px
     }
-    .btn:hover{background:var(--pri2)}
-    .hero{padding:18px 0 10px}
-    .hero h2{margin:0 0 6px;font-size:22px}
-    .hero .sub{color:var(--muted);font-size:13px}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn.primary:hover{background:var(--primary2)}
+    .chip{display:none;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:12px;color:var(--muted)}
+    .chip-dot{width:8px;height:8px;border-radius:999px;background:#22c55e}
+    .page-title{display:flex;align-items:flex-start;gap:10px;margin:18px 0 10px}
+    .page-title h2{margin:0;font-size:26px}
+    .page-title .sub{color:var(--muted);font-size:13px;margin-top:6px}
     .panel{
-      background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-      box-shadow:var(--shadow);padding:14px;margin-top:12px
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:var(--shadow);padding:16px
     }
-    .grid{display:grid;gap:12px}
-    @media(min-width:860px){.grid{grid-template-columns:repeat(4,1fr)}}
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .field label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-    .field select,.field input{
-      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;outline:none
+    .field input,.field select,.field textarea{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;outline:none
     }
-    .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px}
-    .row .btn{padding:10px 14px}
-    .hint{margin-top:10px;color:var(--muted);font-size:12px}
-    .warn{margin-top:10px;color:#b45309;font-size:12px;display:flex;gap:8px;align-items:center}
-    .list{margin-top:14px;display:grid;gap:12px}
-    @media(min-width:860px){.list{grid-template-columns:repeat(2,1fr)}}
+    .field textarea{min-height:120px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .hint{font-size:12px;color:var(--muted)}
+    .err{margin-top:10px;color:#b91c1c;font-size:13px}
+    .listings{margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     .card{
-      background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);
-      padding:14px;display:flex;flex-direction:column;gap:8px
+      background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);
+      display:flex;flex-direction:column;gap:10px;min-height:132px
     }
-    .card .t{display:flex;align-items:center;gap:10px}
-    .card .title{font-weight:700}
-    .tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:999px;background:#fff}
-    .meta{display:flex;flex-wrap:wrap;gap:8px}
-    .price{font-weight:800}
-    .actions{display:flex;gap:10px;margin-top:6px}
-    .btn-lite{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer}
-    .btn-lite:hover{border-color:#cbd5e1}
+    .card-head{display:flex;align-items:flex-start;gap:10px}
+    .card-title{font-weight:700}
+    .card-meta{margin-left:auto;color:var(--muted);font-size:12px}
+    .price{font-weight:800;font-size:18px}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:auto}
+    .link{color:var(--primary);font-weight:600;cursor:pointer}
     .nav{
-      position:fixed;left:0;right:0;bottom:0;z-index:50;
-      background:#fff;border-top:1px solid var(--line)
+      position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);
+      display:flex;justify-content:center;z-index:60
     }
-    .nav-inner{max-width:980px;margin:0 auto;display:flex}
-    .nav a{
-      flex:1;padding:10px 6px;text-align:center;font-size:12px;color:var(--muted);
-      display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center
+    .nav-inner{width:min(1100px,100%);display:flex;justify-content:space-around;padding:10px 10px}
+    .nav a{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:8px 12px;border-radius:12px}
+    .nav a.active{color:var(--primary);background:rgba(37,99,235,.08);font-weight:700}
+    .icon{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center}
+
+    /* modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
+    .modal.open{display:flex}
+    .modal-card{width:min(560px,100%);background:#fff;border-radius:18px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .modal-head h3{margin:0;font-size:16px}
+    .modal-body{padding:16px}
+    .modal-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+    .x{cursor:pointer;font-size:18px;color:var(--muted);padding:6px 10px;border-radius:10px}
+    .x:hover{background:rgba(0,0,0,.06)}
+    .toast{position:fixed;right:16px;bottom:90px;z-index:90;background:#111827;color:#fff;padding:10px 12px;border-radius:12px;box-shadow:var(--shadow);display:none;font-size:13px}
+    .toast.show{display:block}
+    .loading{opacity:.6;pointer-events:none}
+    @media (max-width: 860px){
+      .grid4{grid-template-columns:repeat(2,1fr)}
+      .listings{grid-template-columns:1fr}
+      .page-title h2{font-size:22px}
     }
-    .nav a.active{color:var(--pri);font-weight:700}
-    .ico{font-size:16px;line-height:1}
-    /* login modal */
-    .modal-mask{position:fixed;inset:0;background:rgba(17,24,39,.45);display:none;align-items:center;justify-content:center;z-index:60}
-    .modal{width:min(520px,92vw);background:#fff;border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow);padding:14px}
-    .modal h3{margin:6px 0 10px}
-    .modal .two{display:grid;gap:10px}
-    @media(min-width:640px){.modal .two{grid-template-columns:1fr 1fr}}
-    .modal .x{float:right;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
-    .small{font-size:12px;color:var(--muted)}
-    .ok{color:#065f46}
-    .err{color:#b91c1c}
   </style>
 </head>
 
 <body>
+  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-inner">
-      <button class="btn-ghost" id="btnBack" title="返回">
-        ← <span data-i18n="back">返回</span>
+      <button class="btn" onclick="history.back()">
+        <span class="icon">←</span> 返回
       </button>
 
       <div class="brand">
-        <img class="logo" src="assets/logo.png" alt="logo" onerror="this.style.display='none'">
+        <div class="logo"></div>
         <div>
-          <h1>翱翔安居 · XATU</h1>
-          <p data-i18n="subtitle">西安工业大学学生租房平台</p>
+          <h1>翻翔安居 · XATU</h1>
+          <p>西安工业大学学生租房平台</p>
         </div>
       </div>
 
-      <div class="sp"></div>
+      <div class="spacer"></div>
 
-      <button class="chip" id="btnMe">👤 <span data-i18n="me">我的</span></button>
-      <button class="chip" id="btnLang">EN</button>
-      <button class="btn" id="btnLogin" data-i18n="login">登录</button>
+      <div id="authChip" class="chip"><span class="chip-dot"></span><span id="chipText">未登录</span></div>
+      <button class="btn" onclick="toggleLang()">EN</button>
+      <button id="btnAuthStatus" class="btn primary" onclick="openAuthModal()">登录</button>
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="hero">
-      <h2 data-i18n="browse">租房浏览</h2>
-      <div class="sub" data-i18n="browse_sub">筛选房源 · 收藏 · 一键联系</div>
+  <div class="container">
+    <div class="page-title">
+      <div>
+        <h2>租房浏览</h2>
+        <div class="sub">筛选房源 · 收藏 · 一键联系</div>
+      </div>
     </div>
 
     <div class="panel">
-      <div class="grid">
+      <div class="grid4">
         <div class="field">
-          <label data-i18n="campus">校区</label>
+          <label>校区</label>
           <select id="fCampus">
-            <option value="" data-i18n="all">全部</option>
-            <option value="友谊校区">友谊校区</option>
-            <option value="未央校区">未央校区</option>
+            <option value="">全部</option>
+            <option>友谊校区</option>
+            <option>金花校区</option>
+            <option>未央校区</option>
           </select>
         </div>
         <div class="field">
-          <label data-i18n="rent_type">整租/合租</label>
+          <label>整租/合租</label>
           <select id="fRentType">
-            <option value="" data-i18n="all">全部</option>
-            <option value="整租">整租</option>
-            <option value="合租">合租</option>
+            <option value="">全部</option>
+            <option>整租</option>
+            <option>合租</option>
           </select>
         </div>
         <div class="field">
-          <label data-i18n="bathroom">独卫/公卫</label>
-          <select id="fBath">
-            <option value="" data-i18n="all">全部</option>
-            <option value="独卫">独卫</option>
-            <option value="公卫">公卫</option>
+          <label>独卫/公卫</label>
+          <select id="fToilet">
+            <option value="">全部</option>
+            <option>独卫</option>
+            <option>公卫</option>
           </select>
         </div>
         <div class="field">
-          <label data-i18n="metro">地铁</label>
+          <label>地铁</label>
           <select id="fMetro">
-            <option value="" data-i18n="all">全部</option>
-            <option value="近地铁">近地铁</option>
-            <option value="不限">不限</option>
+            <option value="">全部</option>
+            <option>近地铁</option>
+            <option>不近地铁</option>
           </select>
         </div>
-
-        <div class="field" style="grid-column:1/-1">
-          <label data-i18n="kw">搜索</label>
-          <input id="fKw" placeholder="校区/整租/独卫/地铁/关键词…" />
-        </div>
       </div>
 
-      <div class="row">
-        <button class="btn" id="btnSearch" data-i18n="search">搜索</button>
-        <button class="btn-lite" id="btnClear" data-i18n="clear">清空</button>
-        <div class="hint" id="dataHint"></div>
-      </div>
-
-      <div class="warn" id="warnBox" style="display:none">⚠️ <span id="warnText"></span></div>
-    </div>
-
-    <div class="list" id="list"></div>
-  </div>
-
-  <div class="nav">
-    <div class="nav-inner">
-      <a class="active" href="./index.html"><div class="ico">🏠</div><div data-i18n="nav_browse">租房</div></a>
-      <a href="./submit.html"><div class="ico">➕</div><div data-i18n="nav_submit">发布</div></a>
-      <a href="./favorites.html"><div class="ico">⭐</div><div data-i18n="nav_fav">收藏</div></a>
-      <a href="./support.html"><div class="ico">💬</div><div data-i18n="nav_support">客服</div></a>
-    </div>
-  </div>
-
-  <!-- Login modal -->
-  <div class="modal-mask" id="mask">
-    <div class="modal">
-      <button class="x" id="closeMask">✕</button>
-      <h3 data-i18n="login_title">登录 / 注册</h3>
-      <div class="small" data-i18n="login_tip">
-        建议：先用邮箱+密码快速跑通（手机短信 OTP 以后再加）
-      </div>
-
-      <div class="two" style="margin-top:10px">
-        <div class="field">
-          <label>Email</label>
-          <input id="authEmail" placeholder="name@example.com" />
-        </div>
-        <div class="field">
-          <label data-i18n="password">密码</label>
-          <input id="authPass" type="password" placeholder="********" />
-        </div>
-
-        <div class="field">
-          <label data-i18n="realname">姓名（可选）</label>
-          <input id="pName" placeholder="张三" />
-        </div>
-        <div class="field">
-          <label data-i18n="student_id">学号（可选）</label>
-          <input id="pStudentId" placeholder="2026xxxx" />
-        </div>
-
-        <div class="field" style="grid-column:1/-1">
-          <label data-i18n="phone">手机号（可选）</label>
-          <input id="pPhone" placeholder="仅保存，不验证" />
-        </div>
+      <div class="field" style="margin-top:10px">
+        <label>搜索</label>
+        <input id="fQ" placeholder="校区/整租/独卫/地铁/关键词…"/>
       </div>
 
       <div class="row" style="margin-top:10px">
-        <button class="btn" id="doSignIn" data-i18n="signin">登录</button>
-        <button class="btn-lite" id="doSignUp" data-i18n="signup">注册</button>
-        <button class="btn-lite" id="doSignOut" data-i18n="signout">退出</button>
+        <button class="btn primary" onclick="loadListings(true)">搜索</button>
+        <button class="btn" onclick="resetFilters()">清空</button>
+        <span class="hint">（数据来自 Supabase · listings）</span>
+        <span id="loadHint" class="hint"></span>
       </div>
 
-      <div class="small" id="authMsg" style="margin-top:8px"></div>
+      <div id="errBox" class="err" style="display:none"></div>
+      <div id="listings" class="listings"></div>
     </div>
   </div>
 
+  <!-- Bottom Nav -->
+  <div class="nav">
+    <div class="nav-inner">
+      <a class="active" href="/"><span class="icon">🏠</span><span>租房</span></a>
+      <a href="/submit"><span class="icon">➕</span><span>发布</span></a>
+      <a href="/favorites"><span class="icon">⭐</span><span>收藏</span></a>
+      <a href="/support"><span class="icon">🛟</span><span>客服</span></a>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal" onclick="if(event.target.id==='authModal')closeAuthModal()">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>登录 / 注册</h3>
+        <div class="x" onclick="closeAuthModal()">✕</div>
+      </div>
+      <div class="modal-body">
+        <div class="hint" style="margin-bottom:10px">
+          建议：先用邮箱+密码快速跑通（手机短信 OTP 以后再加）
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Email</label>
+            <input id="authEmail" placeholder="name@example.com"/>
+          </div>
+          <div class="field">
+            <label>密码</label>
+            <input id="authPass" type="password" placeholder="••••••••"/>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px">
+          <div class="field">
+            <label>姓名（可选）</label>
+            <input id="authName" placeholder="张三"/>
+          </div>
+          <div class="field">
+            <label>学号（可选）</label>
+            <input id="authSid" placeholder="2026xxxx"/>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <label>手机号（可选）</label>
+          <input id="authPhone" placeholder="仅保存，不验证"/>
+        </div>
+
+        <div id="authErr" class="err" style="display:none"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn primary" id="btnLogin" onclick="doLogin()">登录</button>
+        <button class="btn" id="btnRegister" onclick="doRegister()">注册</button>
+        <button class="btn" onclick="doLogout()">退出</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
   <script>
-    // ---------- i18n ----------
-    const I18N = {
-      zh: {
-        back:"返回", subtitle:"西安工业大学学生租房平台",
-        me:"我的", login:"登录",
-        browse:"租房浏览", browse_sub:"筛选房源 · 收藏 · 一键联系",
-        campus:"校区", rent_type:"整租/合租", bathroom:"独卫/公卫", metro:"地铁",
-        all:"全部", kw:"搜索", search:"搜索", clear:"清空",
-        nav_browse:"租房", nav_submit:"发布", nav_fav:"收藏", nav_support:"客服",
-        login_title:"登录 / 注册", login_tip:"建议：先用邮箱+密码快速跑通（手机短信 OTP 以后再加）",
-        password:"密码", realname:"姓名（可选）", student_id:"学号（可选）", phone:"手机号（可选）",
-        signin:"登录", signup:"注册", signout:"退出",
-        need_cfg:"未配置 Supabase：请先填写 assets/config.js",
-        fetch_fail:"读取 listings 失败：",
-        need_login:"需要登录后使用此功能",
-        fav:"收藏", unfav:"取消收藏", contact:"联系",
-        copied:"已复制联系方式：",
-        empty:"暂无数据（可能还没发布房源，或都在待审核）"
-      },
-      en: {
-        back:"Back", subtitle:"XATU Student Rental Platform",
-        me:"Me", login:"Login",
-        browse:"Browse Rentals", browse_sub:"Filter · Favorite · Contact",
-        campus:"Campus", rent_type:"Rent Type", bathroom:"Bathroom", metro:"Metro",
-        all:"All", kw:"Search", search:"Search", clear:"Clear",
-        nav_browse:"Browse", nav_submit:"Post", nav_fav:"Favorites", nav_support:"Support",
-        login_title:"Login / Sign up", login_tip:"Tip: use Email+Password first (SMS OTP later).",
-        password:"Password", realname:"Name (optional)", student_id:"Student ID (optional)", phone:"Phone (optional)",
-        signin:"Sign in", signup:"Sign up", signout:"Sign out",
-        need_cfg:"Supabase not configured: fill assets/config.js first.",
-        fetch_fail:"Failed to load listings: ",
-        need_login:"Please login first.",
-        fav:"Favorite", unfav:"Unfavorite", contact:"Contact",
-        copied:"Copied contact: ",
-        empty:"No data yet."
-      }
-    };
-    const LANG_KEY = "xatu_lang";
-    function getLang(){ return localStorage.getItem(LANG_KEY) || "zh"; }
-    function setLang(v){ localStorage.setItem(LANG_KEY, v); applyI18n(); }
-    function t(k){ return (I18N[getLang()]||I18N.zh)[k] || k; }
-    function applyI18n(){
-      document.documentElement.lang = getLang()==="en" ? "en" : "zh-CN";
-      document.getElementById("btnLang").textContent = getLang()==="en" ? "CN" : "EN";
-      document.querySelectorAll("[data-i18n]").forEach(el=>{
-        el.textContent = t(el.getAttribute("data-i18n"));
-      });
-      // placeholders
-      document.getElementById("fKw").placeholder = getLang()==="en" ? "campus / rent / bathroom / metro / keywords..." : "校区/整租/独卫/地铁/关键词…";
-    }
-
-    // ---------- supabase ----------
-    function cfgOk(){
-      return window.APP_CONFIG
-        && typeof window.APP_CONFIG.SUPABASE_URL==="string"
-        && window.APP_CONFIG.SUPABASE_URL.startsWith("http")
-        && typeof window.APP_CONFIG.SUPABASE_ANON_KEY==="string"
-        && window.APP_CONFIG.SUPABASE_ANON_KEY.length>20;
-    }
-    const sb = cfgOk() ? supabase.createClient(
-      window.APP_CONFIG.SUPABASE_URL,
-      window.APP_CONFIG.SUPABASE_ANON_KEY
-    ) : null;
-
     // ---------- UI helpers ----------
-    const warnBox = document.getElementById("warnBox");
-    const warnText = document.getElementById("warnText");
-    function showWarn(msg){
-      warnText.textContent = msg;
-      warnBox.style.display = "flex";
+    function toast(msg){
+      const t=document.getElementById("toast");
+      t.textContent=msg;
+      t.classList.add("show");
+      setTimeout(()=>t.classList.remove("show"),1800);
     }
-    function hideWarn(){ warnBox.style.display="none"; }
-    function back(){
-      if (history.length>1) history.back();
-      else location.href="./index.html";
+    function setAuthErr(msg){
+      const el=document.getElementById("authErr");
+      el.style.display=msg?'block':'none';
+      el.textContent=msg||'';
     }
-
-    // ---------- auth modal ----------
-    const mask = document.getElementById("mask");
-    function openAuth(){ mask.style.display="flex"; }
-    function closeAuth(){ mask.style.display="none"; }
-    document.getElementById("btnLogin").onclick = openAuth;
-    document.getElementById("btnMe").onclick = openAuth;
-    document.getElementById("closeMask").onclick = closeAuth;
-    mask.addEventListener("click",(e)=>{ if(e.target===mask) closeAuth(); });
-
-    async function upsertProfile(userId){
-      if(!sb) return;
-      const name = document.getElementById("pName").value.trim();
-      const student_id = document.getElementById("pStudentId").value.trim();
-      const phone = document.getElementById("pPhone").value.trim();
-      const payload = { id:userId };
-      if(name) payload.name = name;
-      if(student_id) payload.student_id = student_id;
-      if(phone) payload.phone = phone;
-
-      // role default student (SQL 已给 default 'student')
-      await sb.from("profiles").upsert(payload, { onConflict:"id" });
+    function setLoading(loading){
+      document.getElementById("btnLogin").classList.toggle("loading",loading);
+      document.getElementById("btnRegister").classList.toggle("loading",loading);
     }
+    document.addEventListener("keydown",(e)=>{
+      if(e.key==="Escape") closeAuthModal();
+    });
+    function toggleLang(){ toast("语言切换占位（后续接 i18n）"); }
 
-    function setAuthMsg(text, cls){
-      const el=document.getElementById("authMsg");
-      el.className="small "+(cls||"");
-      el.textContent=text||"";
-    }
-
-    document.getElementById("doSignUp").onclick = async ()=>{
-      if(!sb) return showWarn(t("need_cfg"));
-      hideWarn(); setAuthMsg("");
-      try{
-        const email = document.getElementById("authEmail").value.trim();
-        const password = document.getElementById("authPass").value;
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if(error) throw error;
-        if(data?.user?.id) await upsertProfile(data.user.id);
-        setAuthMsg("OK: sign up success (check email if confirmation is enabled).", "ok");
-      }catch(e){
-        setAuthMsg("ERR: "+(e.message||e), "err");
-      }
-    };
-
-    document.getElementById("doSignIn").onclick = async ()=>{
-      if(!sb) return showWarn(t("need_cfg"));
-      hideWarn(); setAuthMsg("");
-      try{
-        const email = document.getElementById("authEmail").value.trim();
-        const password = document.getElementById("authPass").value;
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if(error) throw error;
-        if(data?.user?.id) await upsertProfile(data.user.id);
-        setAuthMsg("OK: signed in", "ok");
-        await refreshAuthUI();
-        closeAuth();
-        await loadListings();
-      }catch(e){
-        setAuthMsg("ERR: "+(e.message||e), "err");
-      }
-    };
-
-    document.getElementById("doSignOut").onclick = async ()=>{
-      if(!sb) return;
-      await sb.auth.signOut();
-      setAuthMsg("OK: signed out", "ok");
-      await refreshAuthUI();
-      await loadListings();
-    };
+    // ---------- Supabase init & Auth ----------
+    if (!window.APP_CONFIG?.SUPABASE_URL) console.warn("config missing");
+    window.sb = window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
 
     async function refreshAuthUI(){
-      if(!sb){
-        document.getElementById("btnLogin").textContent = t("login");
-        return;
+      const { data } = await window.sb.auth.getUser();
+      const user = data?.user || null;
+
+      const btn = document.getElementById("btnAuthStatus");
+      const chip = document.getElementById("authChip");
+      const chipText = document.getElementById("chipText");
+
+      if (user){
+        btn.textContent="已登录";
+        chip.style.display="inline-flex";
+        chipText.textContent=user.email || "已登录";
+      } else {
+        btn.textContent="登录";
+        chip.style.display="none";
       }
-      const { data } = await sb.auth.getUser();
-      const user = data?.user;
-      const btn = document.getElementById("btnLogin");
-      if(user){
-        btn.textContent = (getLang()==="en" ? "Logged" : "已登录");
-      }else{
-        btn.textContent = t("login");
-      }
     }
 
-    // ---------- listings ----------
-    function buildCard(row, favSet){
-      const el = document.createElement("div");
-      el.className = "card";
-
-      const title = row.title || (getLang()==="en" ? "Listing" : "房源");
-      const campus = row.campus || "-";
-      const rent_type = row.rent_type || "-";
-      const bathroom = row.bathroom || "-";
-      const metro = row.metro || "-";
-      const price = row.price ?? "-";
-      const locationTxt = row.location || "";
-
-      const isFav = favSet.has(String(row.id));
-
-      el.innerHTML = `
-        <div class="t">
-          <div class="title">${escapeHtml(title)}</div>
-          <div class="sp"></div>
-          <div class="tag">${escapeHtml(campus)}</div>
-        </div>
-        <div class="meta">
-          <span class="tag">${escapeHtml(rent_type)}</span>
-          <span class="tag">${escapeHtml(bathroom)}</span>
-          <span class="tag">${escapeHtml(metro)}</span>
-        </div>
-        <div class="t">
-          <div class="price">¥ ${escapeHtml(String(price))}</div>
-          <div class="sp"></div>
-          <div class="small">${escapeHtml(locationTxt)}</div>
-        </div>
-        <div class="actions">
-          <button class="btn-lite" data-act="fav">${isFav ? "⭐ "+t("unfav") : "☆ "+t("fav")}</button>
-          <button class="btn" data-act="contact">☎ ${t("contact")}</button>
-        </div>
-      `;
-
-      el.querySelector('[data-act="contact"]').onclick = ()=>{
-        const contact = row.contact || row.contact_info || row.wechat || "";
-        if(!contact){
-          alert(getLang()==="en" ? "No contact info." : "暂无联系方式");
-          return;
-        }
-        navigator.clipboard?.writeText(contact);
-        alert(t("copied")+contact);
-      };
-
-      el.querySelector('[data-act="fav"]').onclick = async ()=>{
-        if(!sb) return showWarn(t("need_cfg"));
-        const { data } = await sb.auth.getUser();
-        if(!data?.user) return alert(t("need_login"));
-        const uid = data.user.id;
-
-        const listingId = row.id;
-        if(isFav){
-          await sb.from("favorites").delete().eq("user_id", uid).eq("listing_id", listingId);
-        }else{
-          await sb.from("favorites").insert({ user_id: uid, listing_id: listingId });
-        }
-        await loadListings();
-      };
-
-      return el;
-    }
-
-    function escapeHtml(s){
-      return String(s||"").replace(/[&<>"']/g,(m)=>({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-      }[m]));
-    }
-
-    function filters(){
-      return {
-        campus: document.getElementById("fCampus").value,
-        rent_type: document.getElementById("fRentType").value,
-        bathroom: document.getElementById("fBath").value,
-        metro: document.getElementById("fMetro").value,
-        kw: document.getElementById("fKw").value.trim()
-      };
-    }
-
-    async function loadFavoritesSet(){
-      const set = new Set();
-      if(!sb) return set;
-      const { data } = await sb.auth.getUser();
-      const user = data?.user;
-      if(!user) return set;
-
-      const { data: favs } = await sb.from("favorites").select("listing_id").eq("user_id", user.id);
-      (favs||[]).forEach(x=>set.add(String(x.listing_id)));
-      return set;
-    }
-
-    async function loadListings(){
-      const list = document.getElementById("list");
-      list.innerHTML = "";
-      hideWarn();
-
-      if(!sb){
-        showWarn(t("need_cfg"));
-        return;
-      }
-
-      document.getElementById("dataHint").textContent = (getLang()==="en")
-        ? "(data from Supabase · listings)"
-        : "（数据来自 Supabase · listings）";
-
+    async function doLogin(){
       try{
-        const f = filters();
-        let q = sb.from("listings").select("*").order("created_at", { ascending:false }).limit(50);
-
-        // 如果你库里有审核字段（比如 status / approved），优先只取已通过
-        // 不存在也没关系，Supabase 会报错 → 我们忽略
-        // 这里不强依赖字段，后面会 fallback
-        // （保持简单：先取全表，靠 RLS 控制）
-        if(f.campus) q = q.eq("campus", f.campus);
-        if(f.rent_type) q = q.eq("rent_type", f.rent_type);
-        if(f.bathroom) q = q.eq("bathroom", f.bathroom);
-        if(f.metro) q = q.eq("metro", f.metro);
-
-        const { data, error } = await q;
-        if(error) throw error;
-
-        // keyword 前端过滤（避免依赖全文索引）
-        const kw = f.kw;
-        let rows = data || [];
-        if(kw){
-          const k = kw.toLowerCase();
-          rows = rows.filter(r=>{
-            const s = [
-              r.title,r.location,r.description,r.campus,r.rent_type,r.bathroom,r.metro
-            ].join(" ").toLowerCase();
-            return s.includes(k);
-          });
-        }
-
-        const favSet = await loadFavoritesSet();
-        if(!rows.length){
-          const empty = document.createElement("div");
-          empty.className="panel";
-          empty.textContent = t("empty");
-          list.appendChild(empty);
-          return;
-        }
-
-        rows.forEach(r=>list.appendChild(buildCard(r, favSet)));
-      }catch(e){
-        showWarn(t("fetch_fail") + (e.message||e));
+        setAuthErr("");
+        setLoading(true);
+        const email=document.getElementById("authEmail").value.trim();
+        const password=document.getElementById("authPass").value;
+        const { error } = await window.sb.auth.signInWithPassword({ email, password });
+        if(error) return setAuthErr(error.message);
+        closeAuthModal();
+        await refreshAuthUI();
+        document.dispatchEvent(new CustomEvent("auth:changed"));
+        toast("登录成功");
+      } finally {
+        setLoading(false);
       }
     }
 
-    // ---------- events ----------
-    document.getElementById("btnBack").onclick = back;
-    document.getElementById("btnLang").onclick = ()=> setLang(getLang()==="en" ? "zh" : "en");
-    document.getElementById("btnSearch").onclick = loadListings;
-    document.getElementById("btnClear").onclick = ()=>{
-      document.getElementById("fCampus").value="";
-      document.getElementById("fRentType").value="";
-      document.getElementById("fBath").value="";
-      document.getElementById("fMetro").value="";
-      document.getElementById("fKw").value="";
-      loadListings();
-    };
+    async function doRegister(){
+      try{
+        setAuthErr("");
+        setLoading(true);
+        const email=document.getElementById("authEmail").value.trim();
+        const password=document.getElementById("authPass").value;
+        const name=document.getElementById("authName").value.trim();
+        const sid=document.getElementById("authSid").value.trim();
+        const phone=document.getElementById("authPhone").value.trim();
 
-    // init
-    applyI18n();
+        // ✅ 邮件确认后回跳到站点首页（避免你手机里看到黑屏/空白页）
+        const redirectTo = location.origin + "/";
+
+        const { error } = await window.sb.auth.signUp({
+          email,
+          password,
+          options:{
+            emailRedirectTo: redirectTo,
+            data:{ name, sid, phone }
+          }
+        });
+        if(error) return setAuthErr(error.message);
+        toast("注册成功：去邮箱点确认链接，然后再回来登录");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function doLogout(){
+      const { error } = await window.sb.auth.signOut();
+      if(error) return toast("退出失败："+error.message);
+      await refreshAuthUI();
+      document.dispatchEvent(new CustomEvent("auth:changed"));
+      toast("已退出");
+    }
+
+    // ---------- Listings ----------
+    function showErr(msg){
+      const box=document.getElementById("errBox");
+      box.style.display=msg?'block':'none';
+      box.textContent=msg||'';
+    }
+    function resetFilters(){
+      ["fCampus","fRentType","fToilet","fMetro","fQ"].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el.tagName==="SELECT") el.value="";
+        else el.value="";
+      });
+      loadListings(true);
+    }
+
+    async function loadListings(showTip){
+      showErr("");
+      document.getElementById("loadHint").textContent="加载中…";
+
+      const campus=document.getElementById("fCampus").value;
+      const rentType=document.getElementById("fRentType").value;
+      const toilet=document.getElementById("fToilet").value;
+      const metro=document.getElementById("fMetro").value;
+      const q=document.getElementById("fQ").value.trim();
+
+      let query = window.sb
+        .from("listings")
+        .select("*")
+        .order("created_at",{ascending:false})
+        .limit(50);
+
+      if(campus) query=query.eq("campus",campus);
+      if(rentType) query=query.eq("rent_type",rentType);
+      if(toilet) query=query.eq("toilet_type",toilet);
+      if(metro) query=query.eq("metro",metro);
+
+      // 简易关键词：匹配 title/location/desc
+      if(q){
+        query = query.or(`title.ilike.%${q}%,location.ilike.%${q}%,description.ilike.%${q}%`);
+      }
+
+      const { data, error } = await query;
+
+      document.getElementById("loadHint").textContent = data ? `共 ${data.length} 条` : "";
+      if(error){
+        showErr("读取 listings 失败： " + error.message);
+        return;
+      }
+      renderListings(data||[]);
+      if(showTip) toast("已刷新");
+    }
+
+    function renderListings(items){
+      const root=document.getElementById("listings");
+      root.innerHTML="";
+      if(!items.length){
+        root.innerHTML = `<div class="hint" style="padding:8px 2px">暂无数据</div>`;
+        return;
+      }
+      items.forEach(x=>{
+        const card=document.createElement("div");
+        card.className="card";
+        card.innerHTML=`
+          <div class="card-head">
+            <div>
+              <div class="card-title">${escapeHtml(x.title || "未命名房源")}</div>
+              <div class="hint">${escapeHtml(x.campus||"")} · ${escapeHtml(x.rent_type||"")} · ${escapeHtml(x.toilet_type||"")} · ${escapeHtml(x.metro||"")}</div>
+            </div>
+            <div class="card-meta">${x.location ? escapeHtml(x.location) : ""}</div>
+          </div>
+          <div class="price">¥ ${escapeHtml(String(x.price ?? ""))}</div>
+          <div class="actions">
+            <span class="link" onclick="toggleFavorite('${x.id}')">☆ 收藏</span>
+            <button class="btn primary" onclick="showContact('${escapeJs(x.contact||"")}')">☎ 联系</button>
+          </div>
+        `;
+        root.appendChild(card);
+      });
+    }
+
+    function showContact(contact){
+      if(!contact) return toast("该房源未填写联系方式");
+      alert("联系方式：\n" + contact);
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g,(m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+    }
+    function escapeJs(str){
+      return String(str).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    }
+
+    // ---------- Favorites ----------
+    async function ensureLogin(){
+      const { data } = await window.sb.auth.getUser();
+      const user = data?.user || null;
+      if(user) return user;
+      toast("请先登录");
+      openAuthModal();
+      return null;
+    }
+
+    async function toggleFavorite(listingId){
+      const user = await ensureLogin();
+      if(!user) return;
+
+      // favorites 表：user_id + listing_id（唯一）
+      const { data: exist } = await window.sb
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("listing_id", listingId)
+        .maybeSingle();
+
+      if(exist?.id){
+        const { error } = await window.sb.from("favorites").delete().eq("id", exist.id);
+        if(error) return toast("取消收藏失败："+error.message);
+        toast("已取消收藏");
+      }else{
+        const { error } = await window.sb.from("favorites").insert({ user_id: user.id, listing_id: listingId });
+        if(error) return toast("收藏失败："+error.message);
+        toast("已收藏");
+      }
+    }
+
+    // ---------- boot ----------
+    window.sb.auth.onAuthStateChange(async ()=>{
+      await refreshAuthUI();
+    });
+
     refreshAuthUI();
-    loadListings();
+    loadListings(false);
   </script>
 </body>
 </html>

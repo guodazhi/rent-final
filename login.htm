@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login · XATU</title>
+  <link rel="stylesheet" href="assets/app.css" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/supabaseClient.js"></script>
+  <script src="assets/i18n.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/auth.js"></script>
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <div class="container">
+    <div class="card">
+      <div class="h1" id="title">登录 / 注册</div>
+
+      <div class="row">
+        <input class="input" id="email" placeholder="Email" />
+        <input class="input" id="password" placeholder="Password" type="password" />
+
+        <div class="muted">注册需要填写（实名/学号/手机号）：</div>
+        <input class="input" id="name" placeholder="姓名 / Real name" />
+        <input class="input" id="student_id" placeholder="学号 / Student ID" />
+        <input class="input" id="phone" placeholder="手机号 / Phone" />
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn" id="btnLogin">登录</button>
+          <button class="btn" id="btnRegister">注册</button>
+        </div>
+
+        <div id="msg" class="muted"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-bottomnav"></div>
+
+  <script>
+    function qs(k){ return new URLSearchParams(location.search).get(k); }
+
+    function render(){
+      UI.renderHeader({ active: "" });
+      UI.renderBottomNav("");
+      AUTH.refreshAuthSlot();
+    }
+    window.addEventListener("langchange", render);
+    render();
+
+    const msg = document.getElementById("msg");
+
+    document.getElementById("btnLogin").onclick = async () => {
+      msg.className = "muted"; msg.textContent = "处理中...";
+      try{
+        await AUTH.signIn(
+          document.getElementById("email").value.trim(),
+          document.getElementById("password").value.trim()
+        );
+        const next = qs("next") || "/index.html";
+        location.href = next;
+      }catch(e){
+        msg.className = "error";
+        msg.textContent = e.message || String(e);
+      }
+    };
+
+    document.getElementById("btnRegister").onclick = async () => {
+      msg.className = "muted"; msg.textContent = "处理中...";
+      try{
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const name = document.getElementById("name").value.trim();
+        const student_id = document.getElementById("student_id").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+
+        if(!name || !student_id || !phone){
+          msg.className = "error";
+          msg.textContent = "注册必须填写：姓名 / 学号 / 手机号";
+          return;
+        }
+        await AUTH.signUp({ email, password, name, student_id, phone });
+        msg.className = "success";
+        msg.textContent = "注册成功！如果提示需要邮箱确认，请先去邮箱确认后再登录。";
+      }catch(e){
+        msg.className = "error";
+        msg.textContent = e.message || String(e);
+      }
+    };
+  </script>
+</body>
+</html>

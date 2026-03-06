@@ -1,244 +1,939 @@
-// assets/app.js
-(function () {
-  const CFG = window.APP_CONFIG || {};
-  const SUPABASE_URL = CFG.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn("Missing APP_CONFIG. Please set assets/config.js");
-  }
-
-  // ===== Utils =====
-  const qs = (s, el=document) => el.querySelector(s);
-  const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-  // ===== Language (simple) =====
-  const LANG_KEY = "xatu_lang";
-  function getLang() { return localStorage.getItem(LANG_KEY) || "zh"; }
-  function setLang(v){ localStorage.setItem(LANG_KEY, v); location.reload(); }
-  window.XATU_LANG = { getLang, setLang };
-
-  // ===== Minimal Supabase REST client (no external lib needed) =====
-  async function sbFetch(path, { method="GET", body, headers={} } = {}) {
-    const url = SUPABASE_URL.replace(/\/$/, "") + path;
-    const h = {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": "application/json",
-      ...headers
-    };
-    const res = await fetch(url, {
-      method,
-      headers: h,
-      body: body ? JSON.stringify(body) : undefined
-    });
-    const text = await res.text();
-    let data;
-    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-    if (!res.ok) {
-      const msg = typeof data === "string" ? data : (data?.message || res.statusText);
-      throw new Error(msg);
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>翱翔安居 · XATU</title>
+  <script src="/assets/config.js"></script>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --primary:#2563eb;
+      --primary-2:#1d4ed8;
+      --line:#e5e7eb;
+      --chip:#f8fafc;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
+      --radius:18px;
     }
-    return data;
-  }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#f8fbff 0%,#f4f6fb 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+    a{text-decoration:none;color:inherit}
+    button,input,select{font:inherit}
 
-  // ===== Auth via Supabase Auth REST =====
-  // We use email+password ONLY (no anonymous)
-  const SESSION_KEY = "xatu_session_v1";
-
-  function saveSession(sess){ localStorage.setItem(SESSION_KEY, JSON.stringify(sess)); }
-  function loadSession(){
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
-  }
-  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
-
-  // Parse tokens from URL after email verify redirect
-  function readUrlTokens() {
-    const h = location.hash || "";
-    const sp = new URLSearchParams(h.startsWith("#") ? h.slice(1) : h);
-    const qp = new URLSearchParams(location.search);
-
-    // Common cases:
-    // #access_token=...&refresh_token=...&expires_in=...&token_type=bearer&type=signup
-    // or ?code=... (PKCE) ——这里我们做兼容兜底
-    const access_token = sp.get("access_token");
-    const refresh_token = sp.get("refresh_token");
-    const expires_in = sp.get("expires_in");
-    const token_type = sp.get("token_type");
-
-    const code = qp.get("code"); // PKCE style
-    const type = sp.get("type") || qp.get("type");
-
-    return { access_token, refresh_token, expires_in, token_type, code, type };
-  }
-
-  async function setSessionFromUrlIfPresent() {
-    const t = readUrlTokens();
-    if (t.access_token && t.refresh_token) {
-      // Save tokens as session
-      const expiresAt = Date.now() + (Number(t.expires_in || 3600) * 1000);
-      saveSession({
-        access_token: t.access_token,
-        refresh_token: t.refresh_token,
-        token_type: t.token_type || "bearer",
-        expires_at: expiresAt
-      });
-      // Clean URL (avoid repeated parsing)
-      history.replaceState({}, document.title, location.pathname);
-      return true;
+    .page{
+      max-width:1180px;
+      margin:0 auto;
+      padding:18px 16px 110px;
     }
 
-    // If PKCE code exists, we can try exchangeCodeForSession endpoint
-    if (t.code) {
-      // Supabase has /auth/v1/token?grant_type=pkce
-      // But needs code_verifier which is stored by supabase-js normally.
-      // Since we are not using supabase-js here, we cannot exchange PKCE safely.
-      // ✅ 兜底：如果你后台邮件模板用的是 “token hash verify” + redirect，这里一般是 hash token，不会走 pkce。
-      // 所以我们提示用户升级模板或用 hash token 模式。
-      console.warn("PKCE code found. This setup expects hash tokens. Please use default email verify redirect.");
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:30;
+      backdrop-filter:blur(12px);
+      background:rgba(248,251,255,.72);
+      border-bottom:1px solid rgba(229,231,235,.8);
     }
-    return false;
-  }
+    .topbar-inner{
+      max-width:1180px;
+      margin:0 auto;
+      padding:12px 16px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
 
-  async function authSignUp(email, password, profile = {}) {
-    // /auth/v1/signup
-    // redirect_to must be allowed in Supabase Redirect URLs
-    const redirect_to = location.origin; // back to site root
-    const data = await sbFetch(`/auth/v1/signup`, {
-      method: "POST",
-      headers: { "X-Client-Info": "xatu-static" },
-      body: {
-        email,
-        password,
-        data: profile,
-        options: { emailRedirectTo: redirect_to }
+    .btn, .pill-btn{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:14px;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .btn:hover,.pill-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.06)}
+    .btn{
+      padding:10px 14px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .btn.primary{
+      background:linear-gradient(135deg,var(--primary),var(--primary-2));
+      color:#fff;
+      border-color:transparent;
+    }
+    .btn.small{padding:8px 12px;font-size:14px}
+    .pill-btn{
+      padding:9px 12px;
+      min-width:44px;
+      text-align:center;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+    .brand img{
+      width:42px;height:42px;border-radius:14px;object-fit:cover;
+      box-shadow:0 8px 18px rgba(37,99,235,.18);
+      background:#fff;
+    }
+    .brand-text{min-width:0}
+    .brand-title{
+      font-size:18px;font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .brand-sub{
+      font-size:12px;color:var(--muted);margin-top:4px;
+    }
+    .spacer{flex:1}
+
+    .hero{
+      margin-top:18px;
+      background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,255,255,.82));
+      border:1px solid rgba(229,231,235,.9);
+      box-shadow:var(--shadow);
+      border-radius:28px;
+      padding:22px;
+    }
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:14px;
+    }
+    .hero-badge img{
+      width:22px;height:22px;border-radius:8px;object-fit:cover;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:16px;
+    }
+    @media (max-width:960px){
+      .hero-grid{grid-template-columns:1fr}
+    }
+
+    .hero-title{
+      font-size:28px;
+      font-weight:900;
+      line-height:1.2;
+      margin:0 0 14px;
+    }
+
+    .quick-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .quick-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:999px;
+      font-size:14px;
+      font-weight:700;
+      color:#334155;
+    }
+
+    .search-wrap{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+      margin-top:6px;
+      flex-wrap:wrap;
+    }
+    .search-box{
+      flex:1;
+      min-width:260px;
+      display:flex;
+      align-items:center;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:0 14px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+    }
+    .search-box input{
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      padding:15px 8px;
+      font-size:15px;
+    }
+    .search-side{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .search-side select{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:16px;
+      padding:0 14px;
+      min-width:130px;
+      color:#334155;
+    }
+
+    .action-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:700px){
+      .action-grid{grid-template-columns:1fr}
+    }
+    .action-card{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:16px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:0 8px 18px rgba(15,23,42,.04);
+    }
+    .action-icon{
+      width:48px;height:48px;border-radius:16px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;background:#eef4ff;color:var(--primary);
+      flex:0 0 auto;
+    }
+    .action-title{font-size:18px;font-weight:900;margin-bottom:3px}
+    .action-sub{font-size:13px;color:var(--muted)}
+
+    .section{
+      margin-top:18px;
+    }
+    .section-head{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;
+    }
+    .section-title{
+      font-size:26px;font-weight:900;
+    }
+
+    .chips{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .chip.active{
+      background:#eff6ff;
+      color:var(--primary);
+      border-color:#bfdbfe;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:12px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
+    .toolbar select{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px 12px;
+      min-width:120px;
+    }
+    .toolbar .hint{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .listings{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      margin-top:16px;
+    }
+    @media (max-width:900px){
+      .listings{grid-template-columns:1fr}
+    }
+
+    .listing{
+      overflow:hidden;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+    }
+    .listing-cover{
+      height:170px;
+      background:linear-gradient(135deg,#dbeafe,#e0f2fe);
+      position:relative;
+    }
+    .listing-badge{
+      position:absolute;
+      top:14px;
+      left:14px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(255,255,255,.9);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:800;
+      color:#334155;
+    }
+    .listing-body{
+      padding:16px;
+    }
+    .listing-title{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 6px;
+      line-height:1.3;
+    }
+    .listing-desc{
+      color:#475569;
+      font-size:14px;
+      line-height:1.55;
+      min-height:44px;
+    }
+    .listing-price{
+      margin-top:10px;
+      font-size:32px;
+      font-weight:900;
+      color:#dc2626;
+      letter-spacing:.2px;
+    }
+    .listing-meta{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:6px;
+    }
+    .listing-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+
+    .empty{
+      grid-column:1 / -1;
+      background:#fff;
+      border:1px dashed #cbd5e1;
+      border-radius:20px;
+      padding:28px;
+      text-align:center;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .tabs{
+      position:fixed;
+      left:0;right:0;bottom:0;
+      z-index:40;
+      background:rgba(255,255,255,.9);
+      border-top:1px solid rgba(229,231,235,.95);
+      backdrop-filter:blur(14px);
+    }
+    .tabs-inner{
+      max-width:1180px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+      padding:10px 14px 14px;
+    }
+    .tab{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .tab .tab-ico{
+      width:42px;height:42px;border-radius:14px;
+      border:1px solid var(--line);
+      background:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;
+    }
+    .tab.active{color:var(--primary)}
+    .tab.active .tab-ico{border-color:#bfdbfe;background:#eff6ff}
+
+    .modal{
+      position:fixed;inset:0;
+      background:rgba(2,6,23,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:18px;
+    }
+    .modal.show{display:flex}
+    .modal-card{
+      width:min(720px,100%);
+      background:#fff;
+      border-radius:24px;
+      border:1px solid var(--line);
+      box-shadow:0 20px 60px rgba(2,6,23,.22);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+    }
+    .modal-title{
+      font-size:22px;
+      font-weight:900;
+    }
+    .modal-close{
+      width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;
+    }
+    .modal-body{padding:18px}
+    .modal-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:720px){
+      .modal-grid{grid-template-columns:1fr}
+    }
+    .modal-note{
+      font-size:13px;color:var(--muted);margin-bottom:12px;
+    }
+    .alert{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      font-size:14px;
+      display:none;
+      white-space:pre-wrap;
+    }
+    .alert.ok{display:block;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+    .alert.err{display:block;background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <button class="btn small" onclick="history.length>1?history.back():location.href='/'">← 返回</button>
+
+      <div class="brand">
+        <img src="/assets/logo.png" alt="logo" />
+        <div class="brand-text">
+          <div class="brand-title">翱翔安居 · XATU</div>
+          <div class="brand-sub">西安工业大学学生租房平台</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <button class="pill-btn" id="btnLang">EN</button>
+      <button class="btn primary" id="btnOpenAuth">登录</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="hero">
+      <div class="hero-badge">
+        <img src="/assets/logo.png" alt="mini logo" />
+        <span>翱翔安居 · 租房</span>
+      </div>
+
+      <div class="hero-grid">
+        <div>
+          <h1 class="hero-title">西安工业大学学生租房平台</h1>
+
+          <div class="quick-row">
+            <div class="quick-pill">📍 西安工业大学（友谊校区）</div>
+            <div class="quick-pill">💬 微信直连：Andygdz77</div>
+          </div>
+
+          <div class="search-wrap">
+            <div class="search-box">
+              <span>🔎</span>
+              <input id="keyword" placeholder="搜索：校区/整租/独卫/地铁/关键词…" />
+            </div>
+            <div class="search-side">
+              <select id="campus">
+                <option value="全部">全部校区</option>
+                <option value="友谊校区">友谊校区</option>
+                <option value="未央校区">未央校区</option>
+                <option value="金花校区">金花校区</option>
+              </select>
+              <button class="btn primary" id="btnSearch">搜索</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          <div class="action-card">
+            <div class="action-icon">🔎</div>
+            <div>
+              <div class="action-title">人工客服</div>
+              <div class="action-sub">免费优质房源 · 咨询签约</div>
+            </div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon">📝</div>
+            <div>
+              <div class="action-title">我要出租</div>
+              <div class="action-sub">中介房源录入 · 业主委托</div>
+            </div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon">✅</div>
+            <div>
+              <div class="action-title">租房攻略</div>
+              <div class="action-sub">避坑清单 · 看房流程</div>
+            </div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon">👥</div>
+            <div>
+              <div class="action-title">扫码加微信</div>
+              <div class="action-sub">长按识别二维码 · 直接沟通</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">房源列表</div>
+      </div>
+
+      <div class="chips" id="quickChips">
+        <button class="chip active" data-keyword="">全部</button>
+        <button class="chip" data-keyword="酒店式短租">酒店式短租</button>
+        <button class="chip" data-keyword="独立卫浴">独立卫浴</button>
+        <button class="chip" data-keyword="押一付三">押一付三</button>
+        <button class="chip" data-keyword="近地铁">近地铁</button>
+        <button class="chip" data-keyword="电梯房">电梯房</button>
+        <button class="chip" data-keyword="可做饭">可做饭</button>
+        <button class="chip" data-keyword="可看房">可看房</button>
+      </div>
+
+      <div class="toolbar">
+        <select id="rentType">
+          <option value="全部">全部</option>
+          <option value="整租">整租</option>
+          <option value="合租">合租</option>
+        </select>
+        <select id="bathType">
+          <option value="全部">全部</option>
+          <option value="独卫">独卫</option>
+          <option value="公卫">公卫</option>
+        </select>
+        <select id="sortType">
+          <option value="created_at.desc">默认</option>
+          <option value="price.asc">价格升序</option>
+          <option value="price.desc">价格降序</option>
+        </select>
+        <div class="hint">数据来自 Supabase · listings</div>
+        <div class="hint" id="loadHint">加载中…</div>
+      </div>
+
+      <div class="listings" id="listings"></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tabs-inner">
+      <a class="tab active" href="/">
+        <div class="tab-ico">🏠</div>
+        <div>租房</div>
+      </a>
+      <a class="tab" href="/submit.html">
+        <div class="tab-ico">＋</div>
+        <div>发布</div>
+      </a>
+      <a class="tab" href="/favorites.html">
+        <div class="tab-ico">⭐</div>
+        <div>收藏</div>
+      </a>
+      <a class="tab" href="/support.html">
+        <div class="tab-ico">💬</div>
+        <div>客服</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 登录 / 注册弹窗 -->
+  <div class="modal" id="authModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">登录 / 注册</div>
+        <button class="modal-close" id="btnCloseAuth">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-note">建议：先用邮箱 + 密码快速跑通。姓名 / 学号 / 手机号只是保存资料，不参与验证。</div>
+
+        <div class="modal-grid">
+          <div class="field" style="grid-column:1 / -1">
+            <label>Email</label>
+            <input id="authEmail" placeholder="name@example.com" />
+          </div>
+          <div class="field">
+            <label>密码</label>
+            <input id="authPwd" type="password" placeholder="请输入密码" />
+          </div>
+          <div class="field">
+            <label>姓名（可选）</label>
+            <input id="authName" placeholder="张三" />
+          </div>
+          <div class="field">
+            <label>学号（可选）</label>
+            <input id="authStudentId" placeholder="2026xxxx" />
+          </div>
+          <div class="field">
+            <label>手机号（可选）</label>
+            <input id="authPhone" placeholder="仅保存，不验证" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn primary" id="btnDoLogin">登录</button>
+          <button class="btn" id="btnDoRegister">注册</button>
+          <button class="btn" id="btnDoLogout" style="display:none">退出登录</button>
+        </div>
+
+        <div class="alert" id="authMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CFG = window.APP_CONFIG || {};
+    const SUPABASE_URL = (CFG.SUPABASE_URL || "").replace(/\/$/, "");
+    const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
+    const SESSION_KEY = "xatu_session_v2";
+    const FAV_KEY = "xatu_favorites_v2";
+
+    const $ = (s) => document.querySelector(s);
+
+    function saveSession(v){ localStorage.setItem(SESSION_KEY, JSON.stringify(v)); }
+    function loadSession(){ try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; } }
+    function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+    function loadFavs(){ try { return JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch { return []; } }
+    function saveFavs(v){ localStorage.setItem(FAV_KEY, JSON.stringify(v)); }
+    function isFav(id){ return loadFavs().includes(String(id)); }
+    function toggleFav(id){
+      const list = loadFavs();
+      const sid = String(id);
+      const idx = list.indexOf(sid);
+      if(idx >= 0) list.splice(idx,1); else list.unshift(sid);
+      saveFavs(list);
+    }
+
+    function setAlert(el, msg, type){
+      el.textContent = msg || "";
+      el.className = "alert";
+      if(!msg){ el.style.display = "none"; return; }
+      el.classList.add(type || "ok");
+      el.style.display = "block";
+    }
+
+    async function api(path, { method="GET", body, token } = {}){
+      const headers = {
+        "apikey": SUPABASE_ANON_KEY,
+        "Content-Type": "application/json"
+      };
+      if(token){
+        headers["Authorization"] = "Bearer " + token;
+      } else {
+        headers["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
       }
-    });
-    return data;
-  }
 
-  async function authSignIn(email, password) {
-    // /auth/v1/token?grant_type=password
-    const data = await sbFetch(`/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      body: { email, password }
-    });
-    // data: {access_token, refresh_token, expires_in, token_type, user}
-    const expiresAt = Date.now() + (Number(data.expires_in || 3600) * 1000);
-    saveSession({
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      token_type: data.token_type || "bearer",
-      expires_at: expiresAt,
-      user: data.user
-    });
-    return data;
-  }
-
-  async function authGetUser() {
-    const sess = loadSession();
-    if (!sess?.access_token) return null;
-    try{
-      const user = await sbFetch(`/auth/v1/user`, {
-        method: "GET",
-        headers: { "Authorization": `Bearer ${sess.access_token}` }
+      const res = await fetch(SUPABASE_URL + path, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
       });
-      return user;
-    }catch(e){
-      console.warn("authGetUser failed:", e.message);
-      return null;
-    }
-  }
 
-  async function authSignOut() {
-    const sess = loadSession();
-    try{
-      if (sess?.access_token) {
-        await sbFetch(`/auth/v1/logout`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${sess.access_token}` },
-          body: {}
+      const text = await res.text();
+      let data;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+      if(!res.ok){
+        throw new Error(data?.message || data?.error_description || data?.hint || res.statusText);
+      }
+      return data;
+    }
+
+    // ===== 邮件确认回跳兜底 =====
+    (function handleAuthCallback(){
+      const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+      const params = new URLSearchParams(hash);
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      const expires_in = params.get("expires_in");
+      const token_type = params.get("token_type");
+
+      if(access_token && refresh_token){
+        saveSession({
+          access_token,
+          refresh_token,
+          token_type: token_type || "bearer",
+          expires_at: Date.now() + Number(expires_in || 3600) * 1000
         });
+        history.replaceState({}, document.title, location.pathname);
       }
-    }catch(e){
-      // ignore
+    })();
+
+    async function getCurrentUser(){
+      const sess = loadSession();
+      if(!sess?.access_token) return null;
+      try{
+        return await api("/auth/v1/user", { token: sess.access_token });
+      }catch{
+        return null;
+      }
     }
-    clearSession();
-  }
 
-  // ===== Favorites =====
-  const FAV_KEY = "xatu_favorites_v1";
-  function loadFavs(){
-    try { return JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch { return []; }
-  }
-  function saveFavs(list){ localStorage.setItem(FAV_KEY, JSON.stringify(list)); }
-  function isFav(id){ return loadFavs().includes(id); }
-  function toggleFav(id){
-    const list = loadFavs();
-    const idx = list.indexOf(id);
-    if (idx >= 0) list.splice(idx, 1); else list.unshift(id);
-    saveFavs(list);
-    return list;
-  }
+    async function refreshAuthUI(){
+      const user = await getCurrentUser();
+      const btnOpenAuth = $("#btnOpenAuth");
+      const btnDoLogout = $("#btnDoLogout");
+      const authMsg = $("#authMsg");
 
-  // ===== Listings (table: listings) =====
-  async function fetchListings({ limit=50, keyword="", campus="全部", rentType="全部", bathType="全部", subway="全部" } = {}) {
-    // Basic filter with ilike
-    // Requires your table "listings" and RLS allowing anon select (or public policy)
-    let url = `/rest/v1/listings?select=*&order=created_at.desc&limit=${encodeURIComponent(limit)}`;
-
-    // keyword search across title/location/desc
-    const filters = [];
-    if (keyword.trim()) {
-      const k = keyword.trim().replace(/[%_]/g, "\\$&");
-      // or=(title.ilike.*k*,location.ilike.*k*,desc.ilike.*k*)
-      filters.push(`or=(title.ilike.*${k}*,location.ilike.*${k}*,description.ilike.*${k}*)`);
+      if(user?.email){
+        btnOpenAuth.textContent = "已登录";
+        btnDoLogout.style.display = "inline-flex";
+        setAlert(authMsg, "当前登录账号：" + user.email, "ok");
+      }else{
+        btnOpenAuth.textContent = "登录";
+        btnDoLogout.style.display = "none";
+      }
+      return user;
     }
-    if (campus !== "全部") filters.push(`campus=eq.${encodeURIComponent(campus)}`);
-    if (rentType !== "全部") filters.push(`rent_type=eq.${encodeURIComponent(rentType)}`);
-    if (bathType !== "全部") filters.push(`bath_type=eq.${encodeURIComponent(bathType)}`);
-    if (subway !== "全部") filters.push(`subway=eq.${encodeURIComponent(subway)}`);
 
-    if (filters.length) url += `&${filters.join("&")}`;
-    return await sbFetch(url);
-  }
+    async function signUp(email, password, profile){
+      return await api("/auth/v1/signup", {
+        method: "POST",
+        body: {
+          email,
+          password,
+          data: profile,
+          options: {
+            emailRedirectTo: location.origin
+          }
+        }
+      });
+    }
 
-  async function createListing(payload) {
-    // Requires insert policy
-    return await sbFetch(`/rest/v1/listings`, {
-      method:"POST",
-      headers:{ "Prefer":"return=representation" },
-      body: payload
+    async function signIn(email, password){
+      const data = await api("/auth/v1/token?grant_type=password", {
+        method: "POST",
+        body: { email, password }
+      });
+      saveSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        token_type: data.token_type || "bearer",
+        expires_at: Date.now() + Number(data.expires_in || 3600) * 1000
+      });
+      return data;
+    }
+
+    async function signOut(){
+      const sess = loadSession();
+      try{
+        if(sess?.access_token){
+          await api("/auth/v1/logout", {
+            method: "POST",
+            token: sess.access_token,
+            body: {}
+          });
+        }
+      }catch{}
+      clearSession();
+    }
+
+    async function fetchListings(){
+      const campus = $("#campus").value;
+      const rentType = $("#rentType").value;
+      const bathType = $("#bathType").value;
+      const keyword = ($("#keyword").value || "").trim();
+      const sortType = $("#sortType").value;
+      const [sortField, sortDir] = sortType.split(".");
+
+      let query = `/rest/v1/listings?select=*&limit=50&order=${sortField}.${sortDir}`;
+
+      if(keyword){
+        query += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,location.ilike.*${encodeURIComponent(keyword)}*,description.ilike.*${encodeURIComponent(keyword)}*)`;
+      }
+      if(campus !== "全部"){
+        query += `&campus=eq.${encodeURIComponent(campus)}`;
+      }
+      if(rentType !== "全部"){
+        query += `&rent_type=eq.${encodeURIComponent(rentType)}`;
+      }
+      if(bathType !== "全部"){
+        query += `&bath_type=eq.${encodeURIComponent(bathType)}`;
+      }
+
+      return await api(query);
+    }
+
+    function renderListings(rows){
+      const box = $("#listings");
+      if(!rows || !rows.length){
+        box.innerHTML = `<div class="empty">暂无房源。可能是当前筛选无结果，或 listings 表还没有公开数据。</div>`;
+        return;
+      }
+
+      box.innerHTML = rows.map((r, idx) => {
+        const id = r.id ?? idx;
+        const title = r.title || "未命名房源";
+        const price = r.price || "—";
+        const campus = r.campus || "校区未填";
+        const rentType = r.rent_type || "未标注";
+        const desc = r.description || r.location || "房源信息待完善";
+        return `
+          <div class="listing">
+            <div class="listing-cover">
+              <div class="listing-badge">${campus}</div>
+            </div>
+            <div class="listing-body">
+              <div class="listing-title">${title}</div>
+              <div class="listing-desc">${desc}</div>
+              <div class="listing-price">${price}元/月</div>
+              <div class="listing-meta">${rentType} · ${campus}</div>
+              <div class="listing-actions">
+                <button class="btn small">查看</button>
+                <button class="btn small" data-fav="${id}">${isFav(id) ? "已收藏" : "收藏"}</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadPageListings(){
+      $("#loadHint").textContent = "加载中…";
+      try{
+        const data = await fetchListings();
+        renderListings(data || []);
+      }catch(e){
+        $("#listings").innerHTML = `<div class="empty">读取房源失败：${e.message}<br>请检查 assets/config.js 中的 Supabase URL / ANON KEY，以及 listings 的 RLS SELECT policy。</div>`;
+      }finally{
+        $("#loadHint").textContent = "";
+      }
+    }
+
+    // ===== 事件绑定 =====
+    $("#btnSearch").onclick = loadPageListings;
+    $("#btnLang").onclick = () => alert("中英切换下一步我可以再给你接完整，这版先把界面和登录跑通。");
+
+    document.querySelectorAll("#quickChips .chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll("#quickChips .chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        $("#keyword").value = chip.dataset.keyword || "";
+        loadPageListings();
+      });
     });
-  }
 
-  async function createSupportTicket(payload) {
-    // Table: reports (or support)
-    // I use "reports" as you screenshot earlier mentioned.
-    return await sbFetch(`/rest/v1/reports`, {
-      method:"POST",
-      headers:{ "Prefer":"return=representation" },
-      body: payload
+    $("#listings").addEventListener("click", (e) => {
+      const favBtn = e.target.closest("[data-fav]");
+      if(!favBtn) return;
+      const id = favBtn.dataset.fav;
+      toggleFav(id);
+      favBtn.textContent = isFav(id) ? "已收藏" : "收藏";
     });
-  }
 
-  // ===== UI helpers =====
-  function setNotice(el, msg, type="notice"){
-    if (!el) return;
-    el.className = `notice ${type==="ok"?"ok":type==="err"?"err":""}`;
-    el.textContent = msg;
-    el.style.display = msg ? "block" : "none";
-  }
+    // ===== 登录弹窗 =====
+    const modal = $("#authModal");
+    $("#btnOpenAuth").onclick = () => modal.classList.add("show");
+    $("#btnCloseAuth").onclick = () => modal.classList.remove("show");
+    modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("show"); });
 
-  // ===== Global init =====
-  window.XATU = {
-    sbFetch,
-    auth: { signUp: authSignUp, signIn: authSignIn, signOut: authSignOut, getUser: authGetUser, setSessionFromUrlIfPresent },
-    listings: { fetch: fetchListings, create: createListing },
-    support: { create: createSupportTicket },
-    favs: { load: loadFavs, save: saveFavs, isFav, toggleFav },
-    ui: { setNotice }
-  };
+    $("#btnDoLogin").onclick = async () => {
+      const msg = $("#authMsg");
+      const email = $("#authEmail").value.trim();
+      const pwd = $("#authPwd").value;
+      if(!email || !pwd){
+        setAlert(msg, "请输入 Email 和密码", "err");
+        return;
+      }
+      try{
+        $("#btnDoLogin").disabled = true;
+        await signIn(email, pwd);
+        setAlert(msg, "登录成功", "ok");
+        await refreshAuthUI();
+        setTimeout(() => modal.classList.remove("show"), 500);
+      }catch(e){
+        setAlert(msg, "登录失败：" + e.message, "err");
+      }finally{
+        $("#btnDoLogin").disabled = false;
+      }
+    };
 
-})();
+    $("#btnDoRegister").onclick = async () => {
+      const msg = $("#authMsg");
+      const email = $("#authEmail").value.trim();
+      const pwd = $("#authPwd").value;
+      if(!email || !pwd){
+        setAlert(msg, "请输入 Email 和密码", "err");
+        return;
+      }
+
+      try{
+        $("#btnDoRegister").disabled = true;
+        await signUp(email, pwd, {
+          name: $("#authName").value.trim() || null,
+          student_id: $("#authStudentId").value.trim() || null,
+          phone: $("#authPhone").value.trim() || null
+        });
+        setAlert(msg, "注册请求已提交：请去邮箱点击确认链接完成激活。", "ok");
+      }catch(e){
+        setAlert(msg, "注册失败：" + e.message, "err");
+      }finally{
+        $("#btnDoRegister").disabled = false;
+      }
+    };
+
+    $("#btnDoLogout").onclick = async () => {
+      await signOut();
+      await refreshAuthUI();
+      setAlert($("#authMsg"), "已退出登录", "ok");
+    };
+
+    // init
+    refreshAuthUI();
+    loadPageListings();
+  </script>
+</body>
+</html>
